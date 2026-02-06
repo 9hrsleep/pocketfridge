@@ -2,11 +2,6 @@ import sqlite3 from 'sqlite3';
 import { promisify } from 'util';
 import path from 'path';
 import fs from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 const DB_PATH = process.env.DB_PATH || './data/pocketfridge.db';
 
@@ -26,7 +21,15 @@ const db = new sqlite3.Database(DB_PATH, err => {
 });
 
 // Promisify database methods for easier async/await usage
-export const dbRun = promisify(db.run.bind(db));
+export const dbRun = function (sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.run(sql, params, function (err) {
+      if (err) reject(err);
+      else resolve({ lastID: this.lastID, changes: this.changes });
+    });
+  });
+};
+
 export const dbGet = promisify(db.get.bind(db));
 export const dbAll = promisify(db.all.bind(db));
 
