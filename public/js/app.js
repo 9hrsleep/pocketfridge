@@ -5,6 +5,7 @@ const API_URL = '/api';
 let currentFridge = null;
 let fridges = [];
 let items = [];
+let allItems = []; // Store unfiltered items
 
 // DOM Elements
 const fridgeList = document.getElementById('fridge-list');
@@ -93,6 +94,7 @@ async function loadItems(fridgeId) {
   try {
     const response = await fetch(`${API_URL}/fridges/${fridgeId}/items`);
     items = await response.json();
+    allItems = [...items]; // Store a copy of unfiltered items
     renderItems();
   } catch (error) {
     console.error('Error loading items:', error);
@@ -278,8 +280,6 @@ function selectFridge(fridgeId) {
 }
 
 function filterItems(filter) {
-  const allItems = [...items];
-  
   if (filter === 'expiring') {
     const sevenDaysFromNow = new Date();
     sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
@@ -290,7 +290,8 @@ function filterItems(filter) {
       return expiryDate <= sevenDaysFromNow;
     });
   } else {
-    items = allItems;
+    // Restore all items
+    items = [...allItems];
   }
   
   renderItems();

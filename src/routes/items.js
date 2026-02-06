@@ -3,6 +3,23 @@ import { dbRun, dbGet, dbAll } from '../database/db.js';
 
 const router = express.Router();
 
+// Get items expiring soon (within specified days) - must be before /:id
+router.get('/expiring/:days', async (req, res) => {
+  try {
+    const days = parseInt(req.params.days) || 7;
+    const items = await dbAll(
+      `SELECT * FROM items 
+       WHERE expiry_date IS NOT NULL 
+       AND DATE(expiry_date) <= DATE('now', '+' || ? || ' days')
+       ORDER BY expiry_date ASC`,
+      [days]
+    );
+    res.json(items);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Get all items
 router.get('/', async (req, res) => {
   try {
@@ -98,23 +115,6 @@ router.delete('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Item not found' });
     }
     res.json({ message: 'Item deleted successfully' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Get items expiring soon (within specified days)
-router.get('/expiring/:days', async (req, res) => {
-  try {
-    const days = parseInt(req.params.days) || 7;
-    const items = await dbAll(
-      `SELECT * FROM items 
-       WHERE expiry_date IS NOT NULL 
-       AND DATE(expiry_date) <= DATE('now', '+' || ? || ' days')
-       ORDER BY expiry_date ASC`,
-      [days]
-    );
-    res.json(items);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
