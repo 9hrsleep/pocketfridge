@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PocketFridge - Fridge Manager</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>🧊 PocketFridge</h1>
+            <p class="tagline">Always know what's in your fridge</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Fridge Selection Section -->
+        <section class="fridge-selector">
+            <div class="section-header">
+                <h2>My Fridges</h2>
+                <button id="add-fridge-btn" class="btn btn-primary">+ Add Fridge</button>
+            </div>
+            <div id="fridge-list" class="fridge-list">
+                <!-- Fridges will be loaded here -->
+            </div>
+        </section>
+
+        <!-- Items Section -->
+        <section class="items-section" id="items-section" style="display: none;">
+            <div class="section-header">
+                <h2 id="current-fridge-name">Fridge Items</h2>
+                <button id="add-item-btn" class="btn btn-primary">+ Add Item</button>
+            </div>
+            
+            <div class="filters">
+                <button class="filter-btn active" data-filter="all">All Items</button>
+                <button class="filter-btn" data-filter="expiring">Expiring Soon</button>
+            </div>
+
+            <div id="items-list" class="items-grid">
+                <!-- Items will be loaded here -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Add Fridge Modal -->
+    <div id="fridge-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Add New Fridge</h2>
+            <form id="fridge-form">
+                <div class="form-group">
+                    <label for="fridge-name">Fridge Name *</label>
+                    <input type="text" id="fridge-name" required placeholder="e.g., Main Fridge">
+                </div>
+                <div class="form-group">
+                    <label for="fridge-location">Location</label>
+                    <input type="text" id="fridge-location" placeholder="e.g., Kitchen">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancel-fridge">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Fridge</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Item Modal -->
+    <div id="item-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Add New Item</h2>
+            <form id="item-form">
+                <div class="form-group">
+                    <label for="item-name">Item Name *</label>
+                    <input type="text" id="item-name" required placeholder="e.g., Milk">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="item-quantity">Quantity</label>
+                        <input type="number" id="item-quantity" value="1" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="item-unit">Unit</label>
+                        <input type="text" id="item-unit" placeholder="e.g., L, kg, pcs">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="item-category">Category</label>
+                    <select id="item-category">
+                        <option value="">Select category</option>
+                        <option value="Dairy">Dairy</option>
+                        <option value="Meat">Meat</option>
+                        <option value="Vegetables">Vegetables</option>
+                        <option value="Fruits">Fruits</option>
+                        <option value="Beverages">Beverages</option>
+                        <option value="Condiments">Condiments</option>
+                        <option value="Leftovers">Leftovers</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="item-expiry">Expiry Date</label>
+                    <input type="date" id="item-expiry">
+                </div>
+                <div class="form-group">
+                    <label for="item-notes">Notes</label>
+                    <textarea id="item-notes" rows="3" placeholder="Any additional notes..."></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancel-item">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Item</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+</body>
+</html>

@@ -107,6 +107,11 @@ dist
 # Docusaurus cache and generated files
 .docusaurus
 
+# Database
+data/
+*.db
+*.db-journal
+
 # Serverless directories
 .serverless/
 

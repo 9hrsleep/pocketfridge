@@ -1,0 +1,27 @@
+{
+  "name": "pocketfridge",
+  "version": "1.0.0",
+  "description": "A pocket fridge manager webapp - always know what's in your fridge",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js",
+    "db:setup": "node src/database/setup.js",
+    "test": "node --test src/**/*.test.js",
+    "lint": "eslint src/",
+    "format": "prettier --write ."
+  },
+  "keywords": ["fridge", "food", "inventory", "management"],
+  "author": "TartanHacks 2026 - kai, sean, arielle, barbara",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "sqlite3": "^5.1.6"
+  },
+  "devDependencies": {
+    "eslint": "^8.54.0",
+    "prettier": "^3.1.0"
+  }
+}
