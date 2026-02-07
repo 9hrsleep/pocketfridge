@@ -51,14 +51,11 @@ export default function RecipeScreen() {
   const favorites = useMemo(() => recipes.filter((r) => r.isFavorite), [recipes]);
 
   useEffect(() => {
-    // demo seed so it looks good immediately
     seedDemoInventoryFromExpirationDays();
-
     const unsub = subscribeInventory((inv) => setInventory(inv));
     return unsub;
   }, []);
 
-  // Initial generation + refresh on inventory change
   useEffect(() => {
     const invCount = Object.keys(inventory).length;
     if (invCount === 0) {
@@ -76,7 +73,6 @@ export default function RecipeScreen() {
 
         if (runId !== latestRunId.current) return;
 
-        // reset list when inventory changes (your original requirement)
         setRecipes(result.map((r) => ({ ...r, isFavorite: false })));
       } finally {
         if (runId !== latestRunId.current) return;
@@ -86,7 +82,6 @@ export default function RecipeScreen() {
   }, [inventory]);
 
   async function onGenerateMore() {
-    // Add 4 NEW recipes on top of the old ones, keep old ones.
     setLoading(true);
     try {
       const excludeTitles = recipes.map((r) => r.title);
@@ -95,7 +90,6 @@ export default function RecipeScreen() {
         excludeTitles,
       });
 
-      // ensure unique ids in UI list (avoid collisions like r1/r2)
       const stamped = newOnes.map((r) => ({
         ...r,
         id: `${r.id}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
@@ -130,9 +124,6 @@ export default function RecipeScreen() {
         <View style={styles.useItCard}>
           <Text style={styles.useItTitle}>Use it or lose it!</Text>
 
-          {/* ✅ Replace this placeholder with your stock image later:
-              <Image source={require("../../assets/use-it-or-lose-it.png")} style={styles.useItStockImage} resizeMode="contain" />
-           */}
           <View style={styles.useItPlaceholderRow}>
             <View style={styles.circle} />
             <View style={styles.circle} />
@@ -146,7 +137,12 @@ export default function RecipeScreen() {
       </View>
 
       {/* BOTTOM GREEN GRADIENT */}
-      <LinearGradient colors={[COLORS.darkGreen, COLORS.darkGreen2]} style={styles.bottomGreen}>
+      <LinearGradient
+  colors={["#3D8D15", "#74AF36"]}
+  start={{ x: 0, y: 0.2 }}
+  end={{ x: 0.57, y: 1 }}
+  style={styles.bottomGreen}
+>
         <View style={styles.recipesHeaderRow}>
           <Text style={styles.recipesHeaderText}>Recipes</Text>
           <Text style={styles.filterIcon}>▾</Text>
@@ -173,32 +169,33 @@ export default function RecipeScreen() {
             )}
             ListFooterComponent={
               <View style={styles.footer}>
-                {/* Generate button */}
                 <Pressable style={styles.generateBtn} onPress={onGenerateMore} disabled={loading}>
                   <Text style={styles.generateBtnText}>
                     {loading ? "Generating…" : "Generate"}
                   </Text>
                 </Pressable>
 
-                {/* Favorite recipes */}
-                <Text style={styles.favTitle}>Favorite recipes</Text>
+                <Text style={styles.favTitle}>Starred Recipes</Text>
 
                 {favorites.length === 0 ? (
-                  <Text style={styles.favEmpty}>Star recipes to save them here.</Text>
+                  <Text style={styles.favEmpty}>Star recipes to save them here!</Text>
                 ) : (
                   <View style={styles.favGrid}>
                     {chunk2(favorites).map((row, idx) => (
                       <View key={idx} style={styles.favRow}>
                         {row.map((r) => (
-                          <View key={r.id} style={styles.favCell}>
-                            <RecipeTile
-                              recipe={r}
-                              onPress={() => openDetail(r)}
-                              onToggleStar={() => toggleFavorite(r.id)}
-                            />
-                          </View>
+                          // ✅ IMPORTANT CHANGE:
+                          // Remove the outer favCell (which was ALSO width: 48%) so tiles keep their normal size.
+                          <RecipeTile
+                            key={r.id}
+                            recipe={r}
+                            onPress={() => openDetail(r)}
+                            onToggleStar={() => toggleFavorite(r.id)}
+                          />
                         ))}
-                        {row.length === 1 ? <View style={styles.favCell} /> : null}
+
+                        {/* Keep the grid aligned if there's only 1 tile in the row */}
+                        {row.length === 1 ? <View style={{ width: "48%" }} /> : null}
                       </View>
                     ))}
                   </View>
@@ -209,11 +206,10 @@ export default function RecipeScreen() {
         )}
       </LinearGradient>
 
-      {/* DETAIL OVERLAY MODAL (NOT a tab page) */}
+      {/* DETAIL OVERLAY MODAL */}
       <Modal visible={!!selected} animationType="slide" onRequestClose={closeDetail}>
         {selected ? (
           <View style={styles.detailRoot}>
-            {/* image header */}
             <View style={styles.detailHeader}>
               {selected.image_url ? (
                 <Image source={{ uri: selected.image_url }} style={styles.detailImage} resizeMode="cover" />
@@ -221,7 +217,6 @@ export default function RecipeScreen() {
                 <View style={styles.detailImageFallback} />
               )}
 
-              {/* back button top-left */}
               <Pressable style={styles.backBtn} onPress={closeDetail}>
                 <Text style={styles.backBtnText}>‹</Text>
               </Pressable>
@@ -277,9 +272,7 @@ export default function RecipeScreen() {
 
                     {selected.ingredients_optional?.length ? (
                       <>
-                        <Text style={[styles.bullet, { marginTop: 10, fontWeight: "800" }]}>
-                          Optional:
-                        </Text>
+                        <Text style={[styles.optionalLabel, { marginTop: 10 }]}>Optional:</Text>
                         {selected.ingredients_optional.map((x, idx) => (
                           <Text key={`opt-${idx}`} style={styles.bullet}>
                             • {x.quantity ? `${x.name} — ${x.quantity}` : x.name}
@@ -333,11 +326,10 @@ function RecipeTile({
       </View>
 
       <View style={styles.tileFooter}>
-        <Text numberOfLines={1} style={styles.tileTitle}>
+        <Text numberOfLines={2} style={styles.tileTitle}>
           {recipe.title}
         </Text>
 
-        {/* star toggle (yellow when favorited) */}
         <Pressable
           onPress={(e) => {
             e.stopPropagation();
@@ -365,50 +357,78 @@ const styles = StyleSheet.create({
 
   topYellow: {
     backgroundColor: COLORS.yellow,
-    paddingTop: 56,
-    paddingHorizontal: 18,
-    paddingBottom: 18,
+    paddingTop: 80,
+    paddingHorizontal: 30,
+    paddingBottom: 40,
   },
 
   useItCard: {
     backgroundColor: COLORS.offWhite,
     borderRadius: 22,
-    paddingVertical: 18,
+    paddingVertical: 20,
     paddingHorizontal: 16,
     alignItems: "center",
   },
+
   useItTitle: {
-    fontSize: 32,
-    fontWeight: "900",
+    fontSize: 40,
+    fontFamily: "Offbit-DotBold",
+    fontWeight: "normal",
+    letterSpacing: 0.5,
     color: COLORS.darkGreen,
-    marginBottom: 10,
+    textShadowColor: "rgba(0,0,0,0.2)",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
+    marginBottom: 7,
+    
   },
+
   useItPlaceholderRow: {
     flexDirection: "row",
     gap: 18,
     marginBottom: 10,
-    marginTop: 6,
+    marginTop: 4,
   },
   circle: { width: 52, height: 52, borderRadius: 26, backgroundColor: "#E7E7E7" },
-  useItSub: { marginTop: 6, fontSize: 13, opacity: 0.85, color: COLORS.darkGreen },
 
-  bottomGreen: { flex: 1, paddingHorizontal: 16, paddingTop: 14 },
+  useItSub: {
+    marginTop: 6,
+    fontSize: 13,
+    fontFamily: "Helvetica-Light",
+    opacity: 0.85,
+    color: COLORS.darkGreen,
+  },
+  bottomGreen: { flex: 1, paddingHorizontal: 30, paddingTop: 14 },
 
   recipesHeaderRow: {
+    paddingVertical: 13,
     flexDirection: "row",
+    paddingHorizontal: 0, // ✅ was 13
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 12,
   },
+
   recipesHeaderText: {
-    fontSize: 52,
-    fontWeight: "900",
+    fontSize: 40,
+    fontFamily: "Offbit-DotBold",
+    fontWeight: "normal",
+    letterSpacing: 0.5,
     color: COLORS.offWhite,
+    textShadowColor: "rgba(0,0,0,0.2)",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
-  filterIcon: { fontSize: 22, color: COLORS.offWhite, opacity: 0.9 },
+
+  filterIcon: {
+    fontSize: 22,
+    fontFamily: "Helvetica-Light",
+    color: COLORS.offWhite,
+    opacity: 0.9,
+  },
 
   loadingWrap: { paddingTop: 30, alignItems: "center" },
-  loadingText: { marginTop: 10, color: COLORS.offWhite, opacity: 0.85 },
+  loadingText: { marginTop: 10, fontFamily: "Helvetica-Light", color: COLORS.offWhite, opacity: 0.85 },
 
   gridContent: { paddingBottom: 24 },
   gridRow: { justifyContent: "space-between", marginBottom: 14 },
@@ -419,7 +439,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     overflow: "hidden",
   },
-  tileImageWrap: { width: "100%", height: 120, backgroundColor: "#DDD" },
+  tileImageWrap: { width: "100%", height: 150, backgroundColor: "#DDD" },
   tileImage: { width: "100%", height: "100%" },
   tileImageFallback: { flex: 1, backgroundColor: "#D9D9D9" },
 
@@ -428,16 +448,26 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 10,
-    paddingVertical: 10,
+    paddingVertical: 12,
     backgroundColor: COLORS.offWhite,
   },
-  tileTitle: { flex: 1, marginRight: 8, color: COLORS.darkGreen, fontWeight: "800" },
 
-  star: { fontSize: 18 },
+  tileTitle: {
+    flex: 1,
+    marginRight: 8,
+    color: COLORS.darkGreen,
+    fontFamily: "Offbit-DotBold",
+    fontWeight: "normal",
+    letterSpacing: 0.5,
+    
+  },
+
+  star: { fontSize: 18, fontFamily: "Helvetica-Light" },
   starOff: { color: COLORS.darkGreen, opacity: 0.9 },
   starOn: { color: COLORS.yellow },
 
   footer: { paddingTop: 8, paddingBottom: 36 },
+
   generateBtn: {
     backgroundColor: COLORS.lightGreen,
     borderRadius: 16,
@@ -445,21 +475,45 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 8,
     marginBottom: 18,
+    width: 200,          // ✅ new
+    alignSelf: "center", // ✅ new
   },
-  generateBtnText: { color: COLORS.darkGreen, fontWeight: "900", fontSize: 16 },
 
-  favTitle: { color: COLORS.offWhite, fontSize: 22, fontWeight: "900", marginBottom: 10 },
-  favEmpty: { color: COLORS.offWhite, opacity: 0.8, marginBottom: 10 },
+  generateBtnText: {
+    color: COLORS.darkGreen,
+    fontFamily: "Offbit-DotBold",
+    fontWeight: "normal",
+    letterSpacing: 1,
+    fontSize: 16,
+  },
+
+  favTitle: {
+    color: COLORS.offWhite,
+    fontSize: 30,
+    fontFamily: "Offbit-DotBold",
+    fontWeight: "normal",
+    letterSpacing: 1,
+    marginBottom: 10,
+    marginTop:10,
+    textShadowColor: "rgba(0,0,0,0.2)",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
+    
+  },
+
+  favEmpty: { color: COLORS.offWhite, fontFamily: "Helvetica-Light", opacity: 0.8, marginBottom: 10 },
 
   favGrid: { gap: 14 },
-  favRow: { flexDirection: "row", justifyContent: "space-between" },
-  favCell: { width: "48%" },
 
-  /** Detail modal */
+  // ✅ Keep the row as a 2-column layout (same as recipe grid)
+  favRow: { flexDirection: "row", justifyContent: "space-between" },
+  favCell: { width: "48%" }, // (unused now, but leaving it doesn’t hurt)
+
   detailRoot: { flex: 1, backgroundColor: COLORS.darkGreen },
   detailHeader: { width: "100%", height: 300, backgroundColor: "#222" },
   detailImage: { width: "100%", height: "100%" },
   detailImageFallback: { flex: 1, backgroundColor: "#444" },
+
   backBtn: {
     position: "absolute",
     top: 54,
@@ -471,7 +525,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  backBtnText: { color: "white", fontSize: 30, fontWeight: "900", marginTop: -2 },
+
+  backBtnText: {
+    color: "white",
+    fontSize: 30,
+    fontFamily: "Offbit-DotBold",
+    fontWeight: "normal",
+    marginTop: -2,
+  },
 
   detailPanel: {
     flex: 1,
@@ -483,7 +544,15 @@ const styles = StyleSheet.create({
     paddingTop: 18,
     paddingBottom: 12,
   },
-  detailTitle: { fontSize: 34, fontWeight: "900", color: COLORS.darkGreen, marginBottom: 12 },
+
+  detailTitle: {
+    fontSize: 34,
+    fontFamily: "Offbit-DotBold",
+    fontWeight: "normal",
+    letterSpacing: 1,
+    color: COLORS.darkGreen,
+    marginBottom: 12,
+  },
 
   toggleWrap: {
     flexDirection: "row",
@@ -495,14 +564,35 @@ const styles = StyleSheet.create({
   toggleBtn: { flex: 1, borderRadius: 999, paddingVertical: 10, alignItems: "center" },
   toggleActive: { backgroundColor: COLORS.yellow },
   toggleInactive: { backgroundColor: "transparent" },
-  toggleText: { fontWeight: "900" },
+
+  toggleText: {
+    fontFamily: "Offbit-DotBold",
+    fontWeight: "normal",
+    letterSpacing: 0.8,
+  },
   toggleTextActive: { color: COLORS.darkGreen },
   toggleTextInactive: { color: COLORS.darkGreen, opacity: 0.85 },
 
   scroll: { flex: 1 },
   scrollContent: { paddingBottom: 20 },
-  bullet: { fontSize: 14, lineHeight: 22, color: "#1F1F1F", marginBottom: 10 },
+
+  bullet: {
+    fontSize: 14,
+    lineHeight: 22,
+    fontFamily: "Helvetica-Light",
+    color: "#1F1F1F",
+    marginBottom: 10,
+  },
+
+  optionalLabel: {
+    fontFamily: "Offbit-DotBold",
+    fontWeight: "normal",
+    letterSpacing: 0.8,
+    fontSize: 14,
+    color: "#1F1F1F",
+    marginBottom: 10,
+  },
 
   metaRow: { flexDirection: "row", gap: 10, paddingTop: 10 },
-  meta: { fontSize: 14, opacity: 0.75, color: "#1F1F1F" },
+  meta: { fontSize: 14, fontFamily: "Helvetica-Light", opacity: 0.75, color: "#1F1F1F" },
 });
