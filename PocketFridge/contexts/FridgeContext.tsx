@@ -22,12 +22,118 @@ type FridgeContextType = FridgeState & {
   getTotalSpending: () => number;
 };
 
+// ════════════════════════════════════════════════════════
+// HARDCODED INITIAL FRIDGE DATA (FOR DEMO)
+// ════════════════════════════════════════════════════════
+
+// Helper dates for expiration
+const TODAY = new Date();
+const TOMORROW = new Date(TODAY); 
+TOMORROW.setDate(TODAY.getDate() + 1);
+const NEXT_WEEK = new Date(TODAY); 
+NEXT_WEEK.setDate(TODAY.getDate() + 7);
+
+const INITIAL_FRIDGE_DATA: FridgeItem[] = [
+  // --- 🔴 EXPIRING SOON ---
+  {
+    id: 'item_milk',
+    food_type: '2% Milk',
+    quantity: 1,
+    category: 'dairy',
+    price: 4.50,
+    date_added: '2026-02-01',
+    date_expiring: getDateOnly(TOMORROW.toISOString()), // Expires tomorrow
+    has_icon: true,
+    icon_name: 'milk'
+  },
+  {
+    id: 'item_salmon',
+    food_type: 'Salmon',
+    quantity: 2,
+    category: 'meat',
+    price: 12.99,
+    date_added: '2026-02-02',
+    date_expiring: getDateOnly(TODAY.toISOString()), // Expires today!
+    has_icon: true,
+    icon_name: 'fish'
+  },
+  {
+    id: 'item_broccoli',
+    food_type: 'Broccoli',
+    quantity: 1,
+    category: 'vegetable',
+    price: 2.99,
+    date_added: '2026-02-01',
+    date_expiring: getDateOnly(TOMORROW.toISOString()), // Expires tomorrow
+    has_icon: true,
+    icon_name: 'broccoli'
+  },
+
+  // --- 🟢 FRESH ITEMS ---
+  {
+    id: 'item_ribeye',
+    food_type: 'Ribeye Steak',
+    quantity: 2,
+    category: 'meat',
+    price: 25.00,
+    date_added: '2026-02-05',
+    date_expiring: getDateOnly(NEXT_WEEK.toISOString()),
+    has_icon: true,
+    icon_name: 'beefsteak'
+  },
+  {
+    id: 'item_eggs',
+    food_type: 'Eggs',
+    quantity: 12,
+    category: 'dairy',
+    price: 5.99,
+    date_added: '2026-02-06',
+    date_expiring: getDateOnly(NEXT_WEEK.toISOString()),
+    has_icon: true,
+    icon_name: 'egg'
+  },
+  {
+    id: 'item_potato',
+    food_type: 'Potato',
+    quantity: 5,
+    category: 'vegetable',
+    price: 3.99,
+    date_added: '2026-02-04',
+    date_expiring: getDateOnly(NEXT_WEEK.toISOString()),
+    has_icon: true,
+    icon_name: 'potato'
+  },
+  {
+    id: 'item_butter',
+    food_type: 'Butter',
+    quantity: 1,
+    category: 'dairy',
+    price: 4.99,
+    date_added: '2026-01-15',
+    date_expiring: null, // Never expires
+    has_icon: true,
+    icon_name: 'butter'
+  },
+  {
+    id: 'item_pasta',
+    food_type: 'Spaghetti',
+    quantity: 1,
+    category: 'grain',
+    price: 1.99,
+    date_added: '2026-01-20',
+    date_expiring: null, // Never expires
+    has_icon: true,
+    icon_name: 'spaghetti'
+  },
+];
+
+
 const FridgeContext = createContext<FridgeContextType | undefined>(undefined);
 
 // ✅ PROVIDER COMPONENT - WRAPS EVERYTHING
 export function FridgeProvider({ children }: { children: React.ReactNode }) {
   // States to be kept track of
-  const [fridgeItems, setFridgeItems] = useState<FridgeItem[]>([]);
+  const [fridgeItems, setFridgeItems] = useState<FridgeItem[]>(INITIAL_FRIDGE_DATA);
   // ↑ Array of item/ingredient objects
 
   const [receipts, setReceipts] = useState<Record<string, Receipt>>({});
