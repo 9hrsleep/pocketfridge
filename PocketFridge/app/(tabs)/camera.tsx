@@ -35,7 +35,7 @@ export default function CameraScreen() {
 
   const processReceipt = async (base64: string) => {
     setLoading(true);
-    console.log("📸 Sending image to AI Service...");
+    console.log("Sending image to GPT4o mini AI Service...");
 
     // 3. Call your AI Brain
     const data = await parseReceipt(base64);

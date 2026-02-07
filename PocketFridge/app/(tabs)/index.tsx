@@ -122,15 +122,13 @@ export default function FridgeScreen() {
 
   return (
     <View style={styles.container}>
-      {/* GREEN GRADIENT BACKGROUND */}
       <LinearGradient
         colors={['#1B7901', '#C3DF63']}
-        start={{ x: 1, y: 0.95 }} // approx -64°
+        start={{ x: 1, y: 0.95 }} 
         end={{ x: 0, y: 1 }}
         style={styles.gradientRoot}
       />
 
-      {/* HEADER ON GREEN */}
       <View style={styles.headerArea}>
         <View style={styles.headerRow}>
           <Text style={styles.pixelTitle}>Your Fridge</Text>
@@ -139,52 +137,71 @@ export default function FridgeScreen() {
           </TouchableOpacity>
         </View>
       </View>
-
-      {/* WHITE CARD (starts at CARD_TOP and goes to bottom) */}
-      <View style={styles.sheetCard}>
+<View style={styles.sheetCard}>
         <ScrollView style={styles.mainScroll} showsVerticalScrollIndicator={false}>
-          {Object.keys(groupedItems).length === 0 ? (
+          {fridgeItems.length === 0 ? (
             <Text style={styles.emptyText}>Fridge is empty! 🛒</Text>
           ) : (
-            Object.keys(groupedItems).map((category) => (
-              <View key={category} style={styles.sectionContainer}>
-                {/* SECTION TITLE */}
-                <Text style={styles.sectionTitle}>{category}</Text>
+            // 3. RENDER BY STRICT ORDER
+            CATEGORY_ORDER.map((category) => {
+              const items = groupedItems[category];
+              // Don't render empty sections
+              if (!items || items.length === 0) return null;
 
-                {/* INGREDIENTS */}
-                <View style={styles.gridContainer}>
-                  {groupedItems[category].map((item) => (
-                    <View key={item.id} style={styles.gridItem}>
-                      {item.date_expiring && (
-                        <View style={styles.notificationBubble}>
-                          <Text style={styles.notifText}>!</Text>
+              return (
+                <View key={category} style={styles.sectionContainer}>
+                  {/* Capitalize Title */}
+                  <Text style={styles.sectionTitle}>
+                    {category.charAt(0).toUpperCase() + category.slice(1)}
+                  </Text>
+
+                  <View style={styles.gridContainer}>
+                    {items.map((item) => {
+                      
+                      // 🔍 DEBUG: Print Expiry Info to Console
+                      if (item.date_expiring) {
+                        const today = new Date();
+                        const exp = new Date(item.date_expiring);
+                        const diff = exp.getTime() - today.getTime();
+                        const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+                        console.log(`[Fridge] ${item.food_type}: Exp ${item.date_expiring} (${days} days left)`);
+                      } else {
+                        console.log(`[Fridge] ${item.food_type}: No Expiration Date`);
+                      }
+
+                      return (
+                        <View key={item.id} style={styles.gridItem}>
+                          
+                          {/* 4. CHECK EXPIRY DATE (<= 2 Days) */}
+                          {isExpiringSoon(item.date_expiring) && (
+                            <View style={styles.notificationBubble}>
+                              <Text style={styles.notifText}>!</Text>
+                            </View>
+                          )}
+
+                          <View style={styles.imageCard}>
+                            {item.icon_name ? (
+                              <Image source={getFoodImage(item.icon_name)} style={styles.foodImage} />
+                            ) : (
+                              <Text style={{ fontSize: 30 }}>📦</Text>
+                            )}
+                          </View>
+
+                          <Text style={styles.foodLabel}>{item.food_type}</Text>
                         </View>
-                      )}
+                      );
+                    })}
+                  </View>
 
-                      <View style={styles.imageCard}>
-                        {item.icon_name ? (
-                          <Image source={getFoodImage(item.icon_name)} style={styles.foodImage} />
-                        ) : (
-                          <Text style={{ fontSize: 30 }}>📦</Text>
-                        )}
-                      </View>
-
-                      <Text style={styles.foodLabel}>{item.food_type}</Text>
-                    </View>
-                  ))}
+                  <View style={styles.separator} />
                 </View>
-
-                {/* ✅ SEPARATOR AT END OF SECTION (not under the title) */}
-                <View style={styles.separator} />
-              </View>
-            ))
+              );
+            })
           )}
-
           <View style={{ height: 100 }} />
         </ScrollView>
       </View>
 
-      {/* FILTER BAR DOCKED ON THE SEAM */}
       <View style={styles.filtersDock}>
         <ScrollView
           horizontal
