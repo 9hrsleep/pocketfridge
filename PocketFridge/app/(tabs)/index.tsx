@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 export default function FridgeScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>My Fridge 🥕 hello</Text>
+      <Text style={styles.title}>My Fridge</Text>
     </View>
   );
 }
