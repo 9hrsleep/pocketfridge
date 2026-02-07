@@ -23,6 +23,22 @@ type FridgeContextType = FridgeState & {
 };
 
 // ════════════════════════════════════════════════════════
+// Helper: normalize receipt image URIs so React Native <Image />
+// can render them (file:// prefix, etc.)
+// ════════════════════════════════════════════════════════
+const normalizeUri = (u: string) => {
+  if (!u) return u;
+
+  // already valid schemes
+  if (u.startsWith("file://") || u.startsWith("http") || u.startsWith("data:")) return u;
+
+  // iOS/Android local absolute paths
+  if (u.startsWith("/")) return `file://${u}`;
+
+  return u;
+};
+
+// ════════════════════════════════════════════════════════
 // HARDCODED INITIAL FRIDGE DATA (FOR DEMO)
 // ════════════════════════════════════════════════════════
 
@@ -130,7 +146,6 @@ const INITIAL_FRIDGE_DATA: FridgeItem[] = [
   },
 ];
 
-
 const FridgeContext = createContext<FridgeContextType | undefined>(undefined);
 
 // ✅ PROVIDER COMPONENT - WRAPS EVERYTHING
@@ -144,6 +159,12 @@ export function FridgeProvider({ children }: { children: React.ReactNode }) {
 
   // Methods
   const addItemsToFridge = (items: any[], receiptImageUri: string) => {
+    // Normalize receipt image URI for rendering in <Image />
+    const normalizedReceiptUri = normalizeUri(receiptImageUri);
+
+    console.log("Saving receipt URI:", receiptImageUri);
+    console.log("Normalized receipt URI:", normalizedReceiptUri);
+
     // ════════════════════════════════════════════════════════
     // STEP 1: ENRICH ITEMS WITH METADATA
     // ════════════════════════════════════════════════════════
@@ -227,7 +248,10 @@ export function FridgeProvider({ children }: { children: React.ReactNode }) {
       updatedReceipts[currentDate] = {
         ...existing,
         totalCost: existing.totalCost + tripCost,
-        imageUris: [...existing.imageUris, receiptImageUri],
+        receiptImages: [
+          ...(existing as any).receiptImages,
+          { uri: normalizedReceiptUri, totalCost: tripCost },
+        ],
         itemCount: existing.itemCount + enrichedItems.length
       };
     } else {
@@ -236,10 +260,13 @@ export function FridgeProvider({ children }: { children: React.ReactNode }) {
         id: receiptId,
         date: currentDate,
         totalCost: tripCost,
-        imageUris: [receiptImageUri],
+        receiptImages: [{ uri: normalizedReceiptUri, totalCost: tripCost }],
         itemCount: enrichedItems.length
       };
     }
+
+    console.log("Updated receipts keys:", Object.keys(updatedReceipts));
+    console.log("Today receipt:", updatedReceipts[currentDate]);
     
     
     // ════════════════════════════════════════════════════════

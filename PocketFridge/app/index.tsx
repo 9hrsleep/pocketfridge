@@ -37,7 +37,7 @@ export default function Welcome() {
           {/* Title */}
           <View style={styles.titleWrapper}>
             <Text style={styles.welcomeTo}>Welcome to</Text>
-            <Text style={styles.title}>Pocket Fridge</Text>
+            <Text style={styles.title}>PocketFridge</Text>
           </View>
 
           {/* Continue Button */}

@@ -45,15 +45,17 @@ export default function CameraScreen() {
     });
 
     if (!result.canceled && result.assets[0].base64) {
-      setImageUri(result.assets[0].uri);
-      processReceipt(result.assets[0].base64);
+      const uri = result.assets[0].uri; // ✅ capture locally
+
+      setImageUri(uri); // keep state for preview UI
+      processReceipt(result.assets[0].base64, uri); // ✅ pass uri directly
     } else {
       // If user hit "Cancel", we allow them to try again manually
       // or we can just leave hasScanned=true so they see the manual button
     }
   };
 
-  const processReceipt = async (base64: string) => {
+  const processReceipt = async (base64: string, receiptUri: string) => {
     setLoading(true);
     // ... (Your existing AI logic remains exactly the same) ...
     const data = await parseReceipt(base64);
@@ -64,7 +66,7 @@ export default function CameraScreen() {
         pathname: "/confirm",
         params: { 
           items: JSON.stringify(foods),
-          receiptUri: imageUri 
+          receiptUri: receiptUri, // ✅ use direct arg
         } 
       });
       // Reset everything so if they come back, it's fresh
@@ -112,6 +114,7 @@ export default function CameraScreen() {
     </LinearGradient>
   );
 }
+
 const styles = StyleSheet.create({
   // DELETE the old 'container' style if you want, or leave it unused.
   
