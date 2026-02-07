@@ -1,13 +1,13 @@
 export interface FridgeItem {
     food_type: string;
     quantity: number;
-    price: number;
+    price: number | null;  // ← Changed
     category: string;
     date_added: string;
-    date_expiring: string;
-    id: string; // i add in later
-    has_icon: boolean; // i add in later
-    icon_name: string | null; // i add in later
+    date_expiring: string | null;  // ← Changed
+    id: string;
+    has_icon: boolean;
+    icon_name: string | null;
 }
 
 export interface Receipt {

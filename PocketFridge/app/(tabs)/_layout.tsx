@@ -1,4 +1,5 @@
 import { Tabs } from 'expo-router';
+import { Text } from 'react-native';  // ← Add this import
 import React from 'react';
 
 import { HapticTab } from '@/components/haptic-tab';
@@ -38,6 +39,13 @@ export default function TabLayout() {
           title: 'Recipes',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="book.fill" color={color} />,
         }}
+      />
+      <Tabs.Screen 
+        name="test" 
+        options={{ 
+          title: "Tests",
+          tabBarIcon: ({ color }) => <Text>🧪</Text>
+        }} 
       />
     </Tabs>
   );
