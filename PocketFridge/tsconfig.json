@@ -5,7 +5,7 @@
     "jsx": "react-jsx",
 
     "module": "esnext",             // CHANGED from "commonjs"
-    "moduleResolution": "bundler",  // CHANGED from "node"
+    "moduleResolution": "node",  // CHANGED from "node"
     "paths": {
       "@/*": ["./*"]
     }
