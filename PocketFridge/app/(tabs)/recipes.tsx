@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import FilterIcon from '../../assets/icons/filter.svg'
 import {
   View,
   Text,
@@ -27,6 +28,8 @@ const COLORS = {
   lightGreen: "#B2D459",
   offWhite: "#FEFFDE",
 };
+
+const CONTENT_RIGHT_INSET = 12;
 
 type RecipeUI = GeneratedRecipe & { isFavorite?: boolean };
 
@@ -145,10 +148,13 @@ export default function RecipeScreen() {
   end={{ x: 0.57, y: 1 }}
   style={styles.bottomGreen}
 >
-        <View style={styles.recipesHeaderRow}>
-          <Text style={styles.recipesHeaderText}>Recipes</Text>
-          <Text style={styles.filterIcon}>▾</Text>
-        </View>
+    <View style={styles.recipesHeaderRow}>
+      <Text style={styles.recipesHeaderText}>Recipes</Text>
+
+      <Pressable onPress={() => { /* open filter modal later */ }}>
+        <FilterIcon width={22} height={22} />
+      </Pressable>
+    </View>
 
         {loading && recipes.length === 0 ? (
           <View style={styles.loadingWrap}>
@@ -165,7 +171,7 @@ export default function RecipeScreen() {
               styles.gridContent,
               {
                 paddingBottom: tabBarHeight + 24,
-                paddingRight: 12, // puts cards back where they were
+                paddingRight: CONTENT_RIGHT_INSET,
               },
             ]}
            
@@ -233,7 +239,7 @@ export default function RecipeScreen() {
 
             <View style={styles.detailPanel}>
               <Text style={styles.detailTitle}>{selected.title}</Text>
-
+          
               <View style={styles.toggleWrap}>
                 <Pressable
                   onPress={() => setDetailTab("ingredients")}
@@ -300,13 +306,16 @@ export default function RecipeScreen() {
                   </>
                 )}
               </ScrollView>
-
               <View style={styles.metaRow}>
-                {typeof selected.time_minutes === "number" ? (
+                {typeof selected.time_minutes === "number" && (
                   <Text style={styles.meta}>⏱ {selected.time_minutes}m</Text>
-                ) : null}
-                {selected.difficulty ? <Text style={styles.meta}>• {selected.difficulty}</Text> : null}
+                )}
+                {selected.difficulty && (
+                  <Text style={styles.meta}>• {selected.difficulty}</Text>
+                )}
               </View>
+
+              
             </View>
           </View>
         ) : null}
@@ -413,6 +422,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     paddingHorizontal: 0, // ✅ was 13
     alignItems: "center",
+    paddingRight:CONTENT_RIGHT_INSET,
     justifyContent: "space-between",
     marginBottom: 12,
   },
@@ -428,13 +438,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 3,
   },
 
-  filterIcon: {
-    fontSize: 22,
-    fontFamily: "Helvetica-Light",
-    color: COLORS.offWhite,
-    opacity: 0.9,
-  },
-
+  
   loadingWrap: { paddingTop: 30, alignItems: "center" },
   loadingText: { marginTop: 10, fontFamily: "Helvetica-Light", color: COLORS.offWhite, opacity: 0.85 },
 
@@ -544,22 +548,25 @@ const styles = StyleSheet.create({
 
   detailPanel: {
     flex: 1,
-    marginTop: -22,
+    marginTop: -6,
     backgroundColor: COLORS.offWhite,
-    borderTopLeftRadius: 22,
-    borderTopRightRadius: 22,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
     paddingHorizontal: 18,
-    paddingTop: 18,
-    paddingBottom: 12,
+    paddingVertical: 40,
+    
+   
+    
   },
 
   detailTitle: {
-    fontSize: 34,
+    fontSize: 36,
     fontFamily: "Offbit-DotBold",
     fontWeight: "normal",
     letterSpacing: 1,
     color: COLORS.darkGreen,
     marginBottom: 12,
+    textAlign: "center",
   },
 
   toggleWrap: {
@@ -601,6 +608,18 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
 
-  metaRow: { flexDirection: "row", gap: 10, paddingTop: 10 },
-  meta: { fontSize: 14, fontFamily: "Helvetica-Light", opacity: 0.75, color: "#1F1F1F" },
+  metaRow: {
+    flexDirection: "row",
+    justifyContent: "center",   // ✅ center the whole row
+    alignItems: "center",
+    gap: 4,
+    marginBottom: 14,           // space before toggle
+  },
+  
+  meta: {
+    fontSize: 16,
+    fontFamily: "Helvetica-Light",
+    opacity: 0.75,
+    color: "#1F1F1F",
+  },
 });
