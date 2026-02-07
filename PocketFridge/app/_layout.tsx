@@ -16,7 +16,12 @@ export default function RootLayout() {
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+        <Stack.Screen 
+        name="confirm" 
+        options={{ 
+          presentation: 'modal', 
+          headerShown: false // <--- This removes the white bar!
+        }} />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>

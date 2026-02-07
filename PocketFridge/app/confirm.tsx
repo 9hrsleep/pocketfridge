@@ -1,60 +1,152 @@
-import { View, Text, Button, FlatList, StyleSheet } from 'react-native';
+// app/confirm.tsx
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-// import { saveIngredients } from '../services/storageService'; // Use Arielle's save function
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+// import { saveIngredients } from '../services/storageService';
 
 export default function ConfirmScreen() {
   const router = useRouter();
-  
-  // 1. Catch the data passed from Camera
   const params = useLocalSearchParams();
-  
-  // Parse the string back into an Object
-  // (We have to verify it exists to avoid crashes)
   const items = params.items ? JSON.parse(params.items as string) : [];
 
   const handleConfirm = async () => {
-    // 2. Save to "Real" Fridge Memory
-    //await saveIngredients(items);
-    
-    // 3. Go home (The Fridge Tab)
+    // await saveIngredients(items);
     router.replace('/(tabs)'); 
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Found {items.length} Items!</Text>
+    // THE GRADIENT IS THE ROOT CONTAINER NOW
+    <LinearGradient 
+      colors={['#B2D459', '#285B23']} 
+      style={styles.gradientRoot}
+    >
       
-      <FlatList
-        data={items}
-        keyExtractor={(item, index) => index.toString()}
-        renderItem={({ item }) => (
-          <View style={styles.itemRow}>
-            <Text style={styles.icon}>🥕</Text> 
-            {/* You can map item.food_type to emojis later if you want */}
-            <View>
-              <Text style={styles.name}>{item.food_type}</Text>
-              <Text style={styles.detail}>Expires in {item.expiration_days} days</Text>
-            </View>
-            <Text style={styles.qty}>x{item.quantity}</Text>
-          </View>
-        )}
-      />
+      <Text style={styles.headerTitle}>Confirm Items</Text>
 
-      <View style={styles.footer}>
-        <Button title="Add to Fridge ✅" onPress={handleConfirm} />
-        <Button title="Retake" color="red" onPress={() => router.back()} />
+      {/* The Ticket Card */}
+      <View style={styles.ticketCard}>
+        
+        {/* Table Header */}
+        <View style={styles.rowHeader}>
+          <Text style={styles.colQty}>Qt.</Text>
+          <Text style={styles.colItem}>Item</Text>
+          <Text style={styles.colPrice}>Price</Text>
+        </View>
+
+        <View style={styles.dashedLine} />
+
+        <ScrollView style={styles.listContainer}>
+          {items.map((item: any, index: number) => (
+            <View key={index} style={styles.itemRow}>
+              
+              <View style={styles.qtyControl}>
+                <TouchableOpacity><Ionicons name="remove-circle-outline" size={24} color="#CEE67A" /></TouchableOpacity>
+                <Text style={styles.qtyText}>{item.quantity}</Text>
+                <TouchableOpacity><Ionicons name="add-circle-outline" size={24} color="#285B23" /></TouchableOpacity>
+              </View>
+
+              <Text style={styles.itemName}>{item.food_type || item.name}</Text>
+              <Text style={styles.itemPrice}>${item.price}</Text>
+            </View>
+          ))}
+          
+          <TouchableOpacity style={styles.addMoreRow}>
+            <Ionicons name="add-circle-outline" size={20} color="#285B23" />
+            <Text style={styles.addMoreText}>Add another/missing item</Text>
+          </TouchableOpacity>
+
+        </ScrollView>
+
+        <View style={styles.footer}>
+          <TouchableOpacity style={styles.confirmBtn} onPress={handleConfirm}>
+            <Text style={styles.confirmBtnText}>Confirm</Text>
+          </TouchableOpacity>
+        </View>
+
       </View>
-    </View>
+      
+      <View style={{height: 40}} /> 
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, paddingTop: 60, backgroundColor: '#fff' },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
-  itemRow: { flexDirection: 'row', alignItems: 'center', padding: 15, borderBottomWidth: 1, borderColor: '#eee' },
-  icon: { fontSize: 30, marginRight: 15 },
-  name: { fontSize: 18, fontWeight: '600' },
-  detail: { color: 'gray' },
-  qty: { marginLeft: 'auto', fontSize: 18, fontWeight: 'bold', color: 'blue' },
-  footer: { marginTop: 20, gap: 10 }
+  // 1. THIS IS THE CRITICAL CHANGE: Flex 1 fills the whole screen
+  gradientRoot: { 
+    flex: 1, 
+    paddingTop: 60, 
+    paddingHorizontal: 20 
+  },
+  
+  headerTitle: { 
+    fontSize: 28, 
+    fontWeight: 'bold', 
+    color: '#FCFEEF', 
+    textAlign: 'center', 
+    marginBottom: 20,
+    textShadowColor: 'rgba(0,0,0,0.2)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3
+  },
+  
+  ticketCard: {
+    backgroundColor: '#FCFEEF', 
+    borderRadius: 20,
+    flex: 1,
+    paddingTop: 20,
+    overflow: 'hidden',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  
+  rowHeader: { flexDirection: 'row', paddingHorizontal: 20, marginBottom: 10 },
+  colQty: { width: 90, fontWeight: 'bold', fontSize: 18, color: '#285B23', textAlign: 'center' },
+  colItem: { flex: 1, fontWeight: 'bold', fontSize: 18, color: '#285B23', textAlign: 'left' },
+  colPrice: { width: 60, fontWeight: 'bold', fontSize: 18, color: '#285B23', textAlign: 'right' },
+
+  dashedLine: { 
+    height: 1, 
+    borderWidth: 1, 
+    borderColor: '#285B23', 
+    borderStyle: 'dashed', 
+    borderRadius: 1, 
+    marginHorizontal: 10,
+    marginBottom: 10,
+    opacity: 0.3
+  },
+
+  listContainer: { flex: 1 },
+  itemRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 20 },
+  
+  qtyControl: { width: 90, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingRight: 10 },
+  qtyText: { fontSize: 16, fontWeight: 'bold', color: '#285B23' },
+  
+  itemName: { flex: 1, fontSize: 16, color: '#285B23', fontWeight: '500' },
+  itemPrice: { width: 60, fontSize: 16, textAlign: 'right', color: '#285B23' },
+
+  addMoreRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 15,
+    borderTopWidth: 1,
+    borderColor: '#CEE67A', 
+    backgroundColor: '#F9FF83', 
+    marginTop: 10
+  },
+  addMoreText: { color: '#285B23', marginLeft: 5, fontWeight: '600' },
+
+  footer: { padding: 20, alignItems: 'center', backgroundColor: '#FCFEEF' },
+  confirmBtn: {
+    backgroundColor: '#B2D459', 
+    paddingVertical: 15,
+    paddingHorizontal: 60,
+    borderRadius: 30,
+    elevation: 3,
+  },
+  confirmBtnText: { fontSize: 18, fontWeight: 'bold', color: '#285B23' }
 });

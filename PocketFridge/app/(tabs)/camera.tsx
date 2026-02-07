@@ -1,11 +1,10 @@
 import { useState } from 'react';
+import { View, Text, ActivityIndicator, StyleSheet, Alert, Image } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { View, Text, Button, ActivityIndicator, StyleSheet, Alert, ScrollView, Image } from 'react-native';
-import { parseReceipt } from '../../services/openaiService';
 import { useRouter } from 'expo-router';
-import CameraButton from '../../components/CameraButton'; // ui component for the round camera button
-
-// Note: I removed storageService and useRouter imports for this test
+import { LinearGradient } from 'expo-linear-gradient';
+import { parseReceipt } from '../../services/openaiService';
+import CameraButton from '../../components/CameraButton'; 
 
 export default function CameraScreen() {
   const [loading, setLoading] = useState(false);
@@ -17,120 +16,108 @@ export default function CameraScreen() {
     const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
     
     if (permissionResult.granted === false) {
-      Alert.alert("Permission Required", "You need to allow camera access to scan receipts.");
+      Alert.alert("Permission Required", "Camera access is required!");
       return;
     }
 
-    // 2. Open Camera
+    // 2. Open Camera (Using the option YOU said works)
     const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.Images,
-      base64: true, // <--- CRITICAL: need the image data for AI
-      quality: 0.5, // <--- Lower quality = Faster API upload
+      mediaTypes: ImagePicker.Images, // <--- Reverted to what works for you
+      base64: true, 
+      quality: 0.5, 
     });
+
     if (!result.canceled && result.assets[0].base64) {
-      setImageUri(result.assets[0].uri); // save image to display on next screen
+      setImageUri(result.assets[0].uri);
       processReceipt(result.assets[0].base64);
     }
   };
 
   const processReceipt = async (base64: string) => {
     setLoading(true);
-    
-    console.log("Sending image to Chat API CALL...");
+    console.log("📸 Sending image to AI Service...");
 
-    // Call your AI services to parse the receipt
+    // 3. Call your AI Brain
     const data = await parseReceipt(base64);
-    
+
     console.log("---------------- API RESPONSE ----------------");
-    console.log(JSON.stringify(data, null, 2)); // Prints pretty JSON to your Terminal
+    console.log(JSON.stringify(data, null, 2)); 
     console.log("----------------------------------------------");
 
-    if (data && data.new_foods) {
-      // Show success on phone screen
-      const summary = data.new_foods.map((i: any) => `${i.quantity} ${i.food_type}`).join("\n");
-      Alert.alert("Success!", `Found ${data.new_foods.length} items:\n\n${summary}`);
+    // FIX: Check for 'new_foods' OR 'items' to be safe
+    const foods = data?.new_foods || data?.items;
+
+    if (foods) {
+      console.log(`✅ Success! Found ${foods.length} items.`);
+      
       router.push({
         pathname: "/confirm",
-        params: { items: JSON.stringify(data.new_foods) } // <--- Pass data as string
+        params: { items: JSON.stringify(foods) } // Send the correct array
       });
+      
+      // Clear image after delay
+      setTimeout(() => setImageUri(null), 500);
     } else {
-      Alert.alert("Error", "Could not read receipt or API failed.");
+      console.error("❌ Error: API returned null or missing 'new_foods'");
+      Alert.alert("Error", "Could not read receipt.");
     }
     
     setLoading(false);
   };
 
+  // --- KAI'S DESIGN: PROCESSING SCREEN ---
   if (loading && imageUri) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.header}>Processing Items...</Text>
+      <LinearGradient 
+        colors={['#B2D459', '#285B23']} 
+        style={styles.gradientContainer}
+      >
+        <Text style={styles.processTitle}>Processing Items...</Text>
         
-        <View style={styles.panel}>
+        {/* The "Receipt" Card */}
+        <View style={styles.card}>
           <Image source={{ uri: imageUri }} style={styles.previewImage} />
-          
-          <View style={styles.loadingOverlay}>
-             <ActivityIndicator size="large" color="#0000ff" />
-             <Text style={styles.loadingText}>Analyzing Receipt...</Text>
-          </View>
         </View>
-      </View>
+        
+        <ActivityIndicator size="large" color="#F9FF83" style={{ marginTop: 20 }} />
+      </LinearGradient>
     );
   }
+
+  // --- DEFAULT CAMERA SCREEN ---
   return (
     <View style={styles.container}>
-      {/* This renders the round button and links it to your function */}
+      <Text style={styles.instructions}>Tap below to scan your receipt</Text>
       <CameraButton onPress={takePicture} />
     </View>
   );
 }
 
-
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    backgroundColor: '#f5f5f5',
-    padding: 20 
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f5f5f5' },
+  instructions: { fontSize: 16, marginBottom: 50, color: '#666' },
+  
+  // Kai's Design Styles
+  gradientContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  processTitle: { 
+    fontSize: 24, 
+    fontWeight: 'bold', 
+    color: '#FCFEEF', 
+    marginBottom: 30,
+    textShadowColor: 'rgba(0,0,0,0.2)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3
   },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#333'
-  },
-  instructions: {
-    fontSize: 16,
-    marginBottom: 20,
-    color: '#666'
-  },
-  panel: {
-    width: '100%',
+  card: {
+    width: 280,
     height: 400,
     backgroundColor: '#fff',
-    borderRadius: 15,
-    overflow: 'hidden', // Keeps the image inside the rounded corners
-    elevation: 5, // Shadow for Android
-    shadowColor: '#000', // Shadow for iOS
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    justifyContent: 'center',
-    alignItems: 'center'
+    borderRadius: 20,
+    overflow: 'hidden',
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
   },
-  previewImage: {
-    width: '100%',
-    height: '100%',
-    opacity: 0.5 // Dim the image slightly so the spinner pops
-  },
-  loadingOverlay: {
-    position: 'absolute', // Float on top of the image
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  loadingText: {
-    marginTop: 10,
-    fontWeight: '600',
-    color: '#333'
-  }
+  previewImage: { width: '100%', height: '100%', resizeMode: 'cover', opacity: 0.8 },
 });
