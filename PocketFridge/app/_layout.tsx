@@ -1,13 +1,13 @@
 // app/_layout.tsx
-import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
-import { Stack } from "expo-router";
-import { StatusBar } from "expo-status-bar";
-import "react-native-reanimated";
-
+import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import 'react-native-reanimated';
 import * as SplashScreen from "expo-splash-screen";
 import { useFonts } from "expo-font";
 
-import { useColorScheme } from "@/hooks/use-color-scheme";
+import { FridgeProvider } from '../contexts/FridgeContext'; // Arielle's Brain
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
 // Keep splash visible while fonts load
 SplashScreen.preventAutoHideAsync();
@@ -32,18 +32,28 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <Stack screenOptions={{ headerShown: false }}>
-        {/* Welcome / entry */}
-        <Stack.Screen name="index" />
+      
+      {/* 3. WRAP EVERYTHING IN THE BRAIN */}
+      <FridgeProvider>
+        <Stack>
+          {/* Welcome Screen (Kai's new screen) */}
+          <Stack.Screen name="index" options={{ headerShown: false }} />
 
-        {/* Main app tabs */}
-        <Stack.Screen name="(tabs)" />
+          {/* Main App Tabs */}
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 
-        {/* Modal */}
-        <Stack.Screen name="confirm" options={{ presentation: "modal" }} />
-      </Stack>
-
-      <StatusBar style="auto" />
+          {/* Confirm Modal (Your screen) */}
+          <Stack.Screen 
+            name="confirm" 
+            options={{ 
+              presentation: "modal", 
+              headerShown: false 
+            }} 
+          />
+        </Stack>
+        <StatusBar style="auto" />
+      </FridgeProvider>
+      
     </ThemeProvider>
   );
 }

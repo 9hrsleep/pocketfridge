@@ -1,11 +1,13 @@
+// PocketFridge/types/index.ts
+
 export interface FridgeItem {
+    id: string;
     food_type: string;
     quantity: number;
-    price: number | null;  // ← Changed
+    price: number | null;
     category: string;
     date_added: string;
-    date_expiring: string | null;  // ← Changed
-    id: string;
+    date_expiring: string | null;
     has_icon: boolean;
     icon_name: string | null;
 }
@@ -15,10 +17,10 @@ export interface Receipt {
     date: string;
     totalCost: number;
     imageUris: string[];
-    itemCount: number;  
+    itemCount: number;
 }
 
-export type FridgeState = {
-  fridgeItems: FridgeItem[];
-  receipts: Record<string, Receipt>;
-};
+export interface FridgeState {
+    fridgeItems: FridgeItem[];
+    receipts: Record<string, Receipt>;
+}

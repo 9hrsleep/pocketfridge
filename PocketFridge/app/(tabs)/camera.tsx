@@ -49,12 +49,14 @@ export default function CameraScreen() {
 
     if (foods) {
       console.log(`✅ Success! Found ${foods.length} items.`);
-      
       router.push({
         pathname: "/confirm",
-        params: { items: JSON.stringify(foods) } // Send the correct array
+        params: { 
+          items: JSON.stringify(foods),
+          // PASS THE IMAGE URI HERE:
+          receiptUri: imageUri 
+        } 
       });
-      
       // Clear image after delay
       setTimeout(() => setImageUri(null), 500);
     } else {
