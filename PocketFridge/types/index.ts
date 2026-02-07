@@ -16,7 +16,10 @@ export interface Receipt {
     id: string;
     date: string;
     totalCost: number;
-    imageUris: string[];
+    receiptImages: {
+        uri: string;
+        totalCost: number;
+    }[];
     itemCount: number;
 }
 
