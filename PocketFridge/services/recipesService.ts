@@ -1,4 +1,5 @@
 import { OpenAI } from "openai";
+import { Image } from "react-native";
 
 export type InventoryItem = {
   food_type: string;
@@ -165,6 +166,98 @@ export function getCachedRecipe(id: string): GeneratedRecipe | null {
 }
 
 /** --------------------------
+ * Image strategy
+ * -------------------------- */
+/**
+ * We do NOT want random images.
+ * These are stable, direct Unsplash CDN links (not "source.unsplash.com").
+ * You can swap these later to your own CDN or local assets.
+ */
+const FALLBACK_IMAGE_BY_TAG: Record<string, string> = {
+  chicken:
+    "https://images.unsplash.com/photo-1604908554027-4d6f0f9b867d?auto=format&fit=crop&w=1200&q=80",
+  pasta:
+    "https://images.unsplash.com/photo-1523986371872-9d3ba2e2f642?auto=format&fit=crop&w=1200&q=80",
+  soup:
+    "https://images.unsplash.com/photo-1543353071-873f17a7a088?auto=format&fit=crop&w=1200&q=80",
+  stirfry:
+    "https://images.unsplash.com/photo-1512058564366-c9e3e0464b93?auto=format&fit=crop&w=1200&q=80",
+  salad:
+    "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1200&q=80",
+  sandwich:
+    "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&fit=crop&w=1200&q=80",
+  burger:
+    "https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=1200&q=80",
+  veggie:
+    "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=1200&q=80",
+  seafood:
+    "https://images.unsplash.com/photo-1553621042-f6e147245754?auto=format&fit=crop&w=1200&q=80",
+  dessert:
+    "https://images.unsplash.com/photo-1499636136210-6f4ee915583e?auto=format&fit=crop&w=1200&q=80",
+  default:
+    "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80",
+};
+
+function guessImageTag(title: string, used: Array<{ name: string }>, invHint?: InventoryItem[]) {
+  const t = `${title} ${used.map((x) => x.name).join(" ")}`.toLowerCase();
+
+  // Ingredient hints first
+  if (t.includes("chicken")) return "chicken";
+  if (t.includes("shrimp") || t.includes("salmon") || t.includes("tuna") || t.includes("fish")) return "seafood";
+  if (t.includes("pasta") || t.includes("spaghetti") || t.includes("mac")) return "pasta";
+  if (t.includes("soup") || t.includes("stew") || t.includes("broth")) return "soup";
+  if (t.includes("stir") || t.includes("stir-fry") || t.includes("stir fry")) return "stirfry";
+  if (t.includes("salad")) return "salad";
+  if (t.includes("sandwich") || t.includes("toast")) return "sandwich";
+  if (t.includes("burger")) return "burger";
+  if (t.includes("yogurt") || t.includes("dessert") || t.includes("sweet")) return "dessert";
+
+  // If inventory hints: many vegetables -> veggie
+  if (invHint && invHint.length) {
+    const vegCount = invHint.filter((x) => x.category === "vegetable").length;
+    const meatCount = invHint.filter((x) => x.category === "meat").length;
+    const seaCount = invHint.filter((x) => x.category === "seafood").length;
+    if (seaCount > 0) return "seafood";
+    if (meatCount > 0) return "chicken";
+    if (vegCount >= 2) return "veggie";
+  }
+
+  return "default";
+}
+
+function fallbackImageForRecipe(r: GeneratedRecipe, invHint?: InventoryItem[]) {
+  const tag = guessImageTag(r.title, r.ingredients_used ?? [], invHint);
+  return FALLBACK_IMAGE_BY_TAG[tag] ?? FALLBACK_IMAGE_BY_TAG.default;
+}
+
+async function isImageLoadable(url: string): Promise<boolean> {
+  if (!url) return false;
+  try {
+    // RN Image.prefetch returns true/false (or throws)
+    const ok = await Image.prefetch(url);
+    return !!ok;
+  } catch {
+    return false;
+  }
+}
+
+async function ensureValidImages(recipes: GeneratedRecipe[], invHint?: InventoryItem[]) {
+  await Promise.all(
+    recipes.map(async (r) => {
+      const url = r.image_url?.trim() ?? "";
+      if (!url) {
+        r.image_url = fallbackImageForRecipe(r, invHint);
+        return;
+      }
+      const ok = await isImageLoadable(url);
+      if (!ok) {
+        r.image_url = fallbackImageForRecipe(r, invHint);
+      }
+    })
+  );
+}
+
+/** --------------------------
  * Recipe generation
  * -------------------------- */
 export async function generateRecipesFromInventory(
@@ -199,9 +292,8 @@ Rules:
 - Generate EXACTLY ${count} DIFFERENT recipes.
 - Each recipe must use at least 1 of the top-expiring ingredients.
 - Do NOT repeat any recipe titles listed in "Existing recipe titles to avoid repeating".
-- Return an image_url that is a DIRECT publicly accessible image link (https://...jpg/png/webp) for the finished dish.
-  Prefer Wikimedia/commons or reputable sites that load in an <Image> tag.
-  Do NOT return Google redirect links. Do NOT return base64.
+- image_url is OPTIONAL. If you provide it, it must be a DIRECT publicly accessible image link (https://...jpg/png/webp).
+  Do NOT return Google redirect links. Do NOT return HTML pages. Prefer stable CDN-style direct image links.
 
 Return ONLY valid JSON:
 {
@@ -216,7 +308,7 @@ Return ONLY valid JSON:
       "time_minutes": 25,
       "difficulty": "easy",
       "source_url": "string optional",
-      "image_url": "string"
+      "image_url": "string optional"
     }
   ]
 }
@@ -258,7 +350,10 @@ Generate ${count} recipes now.
 
     const normalized = recipes
       .slice(0, count)
-      .map((r: any, idx: number) => normalizeRecipe(r, idx));
+      .map((r: any, idx: number) => normalizeRecipe(r, idx, sorted));
+
+    // ✅ NEW: validate image urls and replace broken ones with curated fallbacks
+    await ensureValidImages(normalized, sorted);
 
     setRecipeCache(normalized);
     return normalized;
@@ -271,7 +366,7 @@ Generate ${count} recipes now.
   }
 }
 
-function normalizeRecipe(r: any, idx: number): GeneratedRecipe {
+function normalizeRecipe(r: any, idx: number, invHint?: InventoryItem[]): GeneratedRecipe {
   const safeId = typeof r?.id === "string" ? r.id : `r${idx + 1}`;
   const safeTitle = typeof r?.title === "string" ? r.title : `Recipe ${idx + 1}`;
   const safeWhy =
@@ -313,13 +408,27 @@ function normalizeRecipe(r: any, idx: number): GeneratedRecipe {
       : undefined;
 
   let image =
-    typeof r?.image_url === "string" && r.image_url.length > 0
-      ? r.image_url
+    typeof r?.image_url === "string" && r.image_url.trim().length > 0
+      ? r.image_url.trim()
       : undefined;
 
-  // ✅ Force fallback image so cards always have photos
+  // ✅ IMPORTANT: set a NON-RANDOM, stable fallback immediately (we'll validate/replace later if needed)
   if (!image) {
-    image = unsplashFallback(safeTitle);
+    image = fallbackImageForRecipe(
+      {
+        id: safeId,
+        title: safeTitle,
+        why_this_recipe: safeWhy,
+        ingredients_used: safeUsed,
+        ingredients_optional: safeOptional,
+        steps: safeSteps,
+        time_minutes: time,
+        difficulty,
+        source_url: source,
+        image_url: undefined,
+      },
+      invHint
+    );
   }
 
   return {
@@ -340,7 +449,7 @@ function fallbackRecipes(sortedSoonest: InventoryItem[]): GeneratedRecipe[] {
   const names = sortedSoonest.map((x) => x.food_type);
   const pick = (i: number) => names[i] ?? "Your ingredients";
 
-  return [
+  const base = [
     {
       id: "r1",
       title: `Chicken & Pepper Skillet`,
@@ -348,8 +457,8 @@ function fallbackRecipes(sortedSoonest: InventoryItem[]): GeneratedRecipe[] {
       ingredients_used: [{ name: pick(0) }, { name: "Bell peppers" }, { name: "Shallots" }],
       steps: ["Slice ingredients.", "Sauté until cooked.", "Season and serve."],
       time_minutes: 25,
-      difficulty: "easy",
-      image_url: "https://upload.wikimedia.org/wikipedia/commons/1/15/Chicken_fajitas.jpg",
+      difficulty: "easy" as const,
+      image_url: FALLBACK_IMAGE_BY_TAG.chicken,
       source_url: "https://en.wikipedia.org/wiki/Fajita",
     },
     {
@@ -359,8 +468,8 @@ function fallbackRecipes(sortedSoonest: InventoryItem[]): GeneratedRecipe[] {
       ingredients_used: [{ name: "Green beans" }, { name: "Shallots" }],
       steps: ["Trim beans.", "Stir-fry with aromatics.", "Season and serve."],
       time_minutes: 20,
-      difficulty: "easy",
-      image_url: "https://upload.wikimedia.org/wikipedia/commons/2/2a/Stir_fry.jpg",
+      difficulty: "easy" as const,
+      image_url: FALLBACK_IMAGE_BY_TAG.stirfry,
       source_url: "https://en.wikipedia.org/wiki/Stir_frying",
     },
     {
@@ -370,8 +479,8 @@ function fallbackRecipes(sortedSoonest: InventoryItem[]): GeneratedRecipe[] {
       ingredients_used: [{ name: "Diced tomatoes" }, { name: "Parmesan" }, { name: "Broth" }],
       steps: ["Simmer tomatoes + broth.", "Blend if desired.", "Finish with parmesan."],
       time_minutes: 30,
-      difficulty: "easy",
-      image_url: "https://upload.wikimedia.org/wikipedia/commons/9/98/Tomato_soup.jpg",
+      difficulty: "easy" as const,
+      image_url: FALLBACK_IMAGE_BY_TAG.soup,
       source_url: "https://en.wikipedia.org/wiki/Tomato_soup",
     },
     {
@@ -381,11 +490,13 @@ function fallbackRecipes(sortedSoonest: InventoryItem[]): GeneratedRecipe[] {
       ingredients_used: [{ name: "Wheat bread" }, { name: "Chicken" }],
       steps: ["Cook chicken.", "Toast bread.", "Assemble and serve."],
       time_minutes: 15,
-      difficulty: "easy",
-      image_url: "https://upload.wikimedia.org/wikipedia/commons/1/10/Chicken_sandwich.jpg",
+      difficulty: "easy" as const,
+      image_url: FALLBACK_IMAGE_BY_TAG.sandwich,
       source_url: "https://en.wikipedia.org/wiki/Chicken_sandwich",
     },
   ];
+
+  return base;
 }
 
 /** helpers */
@@ -414,9 +525,4 @@ function addDaysYYYYMMDD(dateStr: string, days: number): string {
 function compareYYYYMMDD(a: string, b: string): number {
   if (a === b) return 0;
   return a < b ? -1 : 1;
-}
-
-function unsplashFallback(query: string) {
-  const q = encodeURIComponent(query.replace(/\s+/g, " ").trim());
-  return `https://source.unsplash.com/800x600/?${q},food`;
 }

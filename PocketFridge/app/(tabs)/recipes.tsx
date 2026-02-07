@@ -1,5 +1,6 @@
+// recipes.tsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import FilterIcon from '../../assets/icons/filter.svg'
+import FilterIcon from "../../assets/icons/filter.svg";
 import {
   View,
   Text,
@@ -10,6 +11,7 @@ import {
   Pressable,
   Modal,
   ScrollView,
+  ImageSourcePropType,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -31,7 +33,218 @@ const COLORS = {
 
 const CONTENT_RIGHT_INSET = 12;
 
-type RecipeUI = GeneratedRecipe & { isFavorite?: boolean };
+/**
+ * ✅ Local stock food images (static require) — MUST be hardcoded.
+ * Path matches: assets/images/food/<file>.png
+ */
+type FoodKey =
+  | "beefsteak"
+  | "broccoli"
+  | "butter"
+  | "carrot"
+  | "chickenbreast"
+  | "chickenbroth"
+  | "cucumber"
+  | "egg"
+  | "garlic"
+  | "greenbean"
+  | "greenbellpepper"
+  | "heavycream"
+  | "impossibleburger"
+  | "jalapeno"
+  | "ketchup"
+  | "lime"
+  | "milk"
+  | "parmesan"
+  | "peanutbutter"
+  | "potato"
+  | "redbellpepper"
+  | "rigatoni"
+  | "salmon"
+  | "shallot"
+  | "shrimp"
+  | "spaghetti"
+  | "tomato"
+  | "tomatopaste"
+  | "wheatbread"
+  | "yogurt";
+
+const FOOD_IMAGES: Record<FoodKey, ImageSourcePropType> = {
+  beefsteak: require("../../assets/images/food/beefsteak.png"),
+  broccoli: require("../../assets/images/food/broccoli.png"),
+  butter: require("../../assets/images/food/butter.png"),
+  carrot: require("../../assets/images/food/carrot.png"),
+  chickenbreast: require("../../assets/images/food/chickenbreast.png"),
+  chickenbroth: require("../../assets/images/food/chickenbroth.png"),
+  cucumber: require("../../assets/images/food/cucumber.png"),
+  egg: require("../../assets/images/food/egg.png"),
+  garlic: require("../../assets/images/food/garlic.png"),
+  greenbean: require("../../assets/images/food/greenbean.png"),
+  greenbellpepper: require("../../assets/images/food/greenbellpepper.png"),
+  heavycream: require("../../assets/images/food/heavycream.png"),
+  impossibleburger: require("../../assets/images/food/impossibleburger.png"),
+  jalapeno: require("../../assets/images/food/jalapeno.png"),
+  ketchup: require("../../assets/images/food/ketchup.png"),
+  lime: require("../../assets/images/food/lime.png"),
+  milk: require("../../assets/images/food/milk.png"),
+  parmesan: require("../../assets/images/food/parmesan.png"),
+  peanutbutter: require("../../assets/images/food/peanutbutter.png"),
+  potato: require("../../assets/images/food/potato.png"),
+  redbellpepper: require("../../assets/images/food/redbellpepper.png"),
+  rigatoni: require("../../assets/images/food/rigatoni.png"),
+  salmon: require("../../assets/images/food/salmon.png"),
+  shallot: require("../../assets/images/food/shallot.png"),
+  shrimp: require("../../assets/images/food/shrimp.png"),
+  spaghetti: require("../../assets/images/food/spaghetti.png"),
+  tomato: require("../../assets/images/food/tomato.png"),
+  tomatopaste: require("../../assets/images/food/tomatopaste.png"),
+  wheatbread: require("../../assets/images/food/wheatbread.png"),
+  yogurt: require("../../assets/images/food/yogurt.png"),
+};
+
+const GENERIC_FOOD_FALLBACK_KEY: FoodKey = "broccoli";
+
+type RecipeUI = GeneratedRecipe & { isFavorite?: boolean; _imgKey?: FoodKey };
+
+/** Normalize display name for the top "Use it or lose it" labels */
+function normalizeFoodLabel(raw: string) {
+  const s = (raw || "").trim();
+
+  // fix: "Boneless Chicken Breast" -> "Chicken Breast"
+  if (/boneless\s+chicken\s+breast/i.test(s)) return "Chicken Breast";
+
+  // keep it simple & consistent (title-case-ish)
+  // (We won’t aggressively title-case everything to avoid weird capitalization.)
+  return s;
+}
+
+/**
+ * Convert inventory food_type to a FoodKey (best-effort).
+ * This is what powers the top 3 ingredient icons.
+ */
+function foodTypeToKey(foodType: string): FoodKey | null {
+  const t = (foodType || "").toLowerCase();
+
+  // proteins
+  if (t.includes("chicken breast") || (t.includes("chicken") && t.includes("breast"))) return "chickenbreast";
+  if (t.includes("beef") || t.includes("steak")) return "beefsteak";
+  if (t.includes("salmon")) return "salmon";
+  if (t.includes("shrimp")) return "shrimp";
+  if (t.includes("egg")) return "egg";
+  if (t.includes("impossible")) return "impossibleburger";
+
+  // veg / produce
+  if (t.includes("green bell pepper") || t.includes("green pepper")) return "greenbellpepper";
+  if (t.includes("red bell pepper") || t.includes("red pepper")) return "redbellpepper";
+  if (t.includes("bell pepper")) return "greenbellpepper"; // default bell pepper
+  if (t.includes("green bean")) return "greenbean";
+  if (t.includes("broccoli")) return "broccoli";
+  if (t.includes("carrot")) return "carrot";
+  if (t.includes("cucumber")) return "cucumber";
+  if (t.includes("tomato paste")) return "tomatopaste";
+  if (t.includes("tomato")) return "tomato";
+  if (t.includes("potato")) return "potato";
+  if (t.includes("garlic")) return "garlic";
+  if (t.includes("shallot")) return "shallot";
+  if (t.includes("jalape")) return "jalapeno";
+  if (t.includes("lime")) return "lime";
+
+  // dairy / pantry
+  if (t.includes("heavy cream")) return "heavycream";
+  if (t.includes("milk")) return "milk";
+  if (t.includes("yogurt")) return "yogurt";
+  if (t.includes("parmesan")) return "parmesan";
+  if (t.includes("butter")) return "butter";
+  if (t.includes("peanut butter")) return "peanutbutter";
+  if (t.includes("ketchup")) return "ketchup";
+  if (t.includes("chicken broth") || t.includes("broth")) return "chickenbroth";
+  if (t.includes("wheat bread") || t.includes("bread")) return "wheatbread";
+
+  // pasta
+  if (t.includes("spaghetti")) return "spaghetti";
+  if (t.includes("rigatoni")) return "rigatoni";
+
+  return null;
+}
+
+/**
+ * Pick a recipe image key (local stock icon) that matches the recipe.
+ * Goal:
+ * - strictly food-looking (local icons only)
+ * - avoid duplicates across the visible list (by usedKeys)
+ */
+function pickRecipeImageKey(recipe: GeneratedRecipe, usedKeys: Set<FoodKey>): FoodKey {
+  const title = (recipe.title || "").toLowerCase();
+
+  const ingredients = [
+    ...(recipe.ingredients_used?.map((x) => x.name) ?? []),
+    ...(recipe.ingredients_optional?.map((x) => x.name) ?? []),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  const text = `${title} ${ingredients}`;
+
+  // Ordered priority list (feel free to tweak)
+  const candidates: FoodKey[] = [];
+
+  // proteins first
+  if (text.includes("chicken")) candidates.push("chickenbreast");
+  if (text.includes("beef") || text.includes("steak")) candidates.push("beefsteak");
+  if (text.includes("salmon")) candidates.push("salmon");
+  if (text.includes("shrimp")) candidates.push("shrimp");
+  if (text.includes("egg")) candidates.push("egg");
+  if (text.includes("impossible")) candidates.push("impossibleburger");
+
+  // veg / produce
+  if (text.includes("green bell pepper") || text.includes("green pepper")) candidates.push("greenbellpepper");
+  if (text.includes("red bell pepper") || text.includes("red pepper")) candidates.push("redbellpepper");
+  if (text.includes("bell pepper")) candidates.push("greenbellpepper");
+  if (text.includes("green bean")) candidates.push("greenbean");
+  if (text.includes("broccoli")) candidates.push("broccoli");
+  if (text.includes("carrot")) candidates.push("carrot");
+  if (text.includes("cucumber")) candidates.push("cucumber");
+  if (text.includes("tomato paste")) candidates.push("tomatopaste");
+  if (text.includes("tomato")) candidates.push("tomato");
+  if (text.includes("potato")) candidates.push("potato");
+  if (text.includes("garlic")) candidates.push("garlic");
+  if (text.includes("shallot")) candidates.push("shallot");
+  if (text.includes("jalape")) candidates.push("jalapeno");
+  if (text.includes("lime")) candidates.push("lime");
+
+  // dairy/pantry
+  if (text.includes("heavy cream")) candidates.push("heavycream");
+  if (text.includes("milk")) candidates.push("milk");
+  if (text.includes("yogurt")) candidates.push("yogurt");
+  if (text.includes("parmesan")) candidates.push("parmesan");
+  if (text.includes("butter")) candidates.push("butter");
+  if (text.includes("peanut butter")) candidates.push("peanutbutter");
+  if (text.includes("ketchup")) candidates.push("ketchup");
+  if (text.includes("chicken broth") || text.includes("broth")) candidates.push("chickenbroth");
+  if (text.includes("wheat bread") || text.includes("bread") || text.includes("sandwich")) candidates.push("wheatbread");
+
+  // pasta
+  if (text.includes("spaghetti")) candidates.push("spaghetti");
+  if (text.includes("rigatoni")) candidates.push("rigatoni");
+  if (text.includes("pasta")) candidates.push("spaghetti");
+
+  // Dedup while preserving order
+  const seen = new Set<FoodKey>();
+  const ordered = candidates.filter((k) => (seen.has(k) ? false : (seen.add(k), true)));
+
+  // Prefer an unused matching key
+  for (const k of ordered) {
+    if (!usedKeys.has(k)) return k;
+  }
+  // If all matching keys used, allow reuse (but we’ll try to avoid it below)
+  if (ordered.length > 0) return ordered[0];
+
+  // Otherwise pick any unused key to avoid duplicate-looking tiles
+  const allKeys = Object.keys(FOOD_IMAGES) as FoodKey[];
+  const firstUnused = allKeys.find((k) => !usedKeys.has(k));
+  return firstUnused ?? GENERIC_FOOD_FALLBACK_KEY;
+}
 
 export default function RecipeScreen() {
   const [inventory, setInventory] = useState<InventoryDict>({});
@@ -75,10 +288,17 @@ export default function RecipeScreen() {
       setLoading(true);
       try {
         const result = await generateRecipesFromInventory(inventory, { count: 4 });
-
         if (runId !== latestRunId.current) return;
 
-        setRecipes(result.map((r) => ({ ...r, isFavorite: false })));
+        // ✅ FIX: stamp each recipe with a LOCAL image key, and avoid duplicates in this batch
+        const usedKeys = new Set<FoodKey>();
+        const stamped: RecipeUI[] = result.map((r) => {
+          const key = pickRecipeImageKey(r, usedKeys);
+          usedKeys.add(key);
+          return { ...r, _imgKey: key, isFavorite: false };
+        });
+
+        setRecipes(stamped);
       } finally {
         if (runId !== latestRunId.current) return;
         setLoading(false);
@@ -95,11 +315,15 @@ export default function RecipeScreen() {
         excludeTitles,
       });
 
-      const stamped = newOnes.map((r) => ({
-        ...r,
-        id: `${r.id}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-        isFavorite: false,
-      }));
+      // ✅ FIX: avoid reusing the same image across existing + new recipes
+      const usedKeys = new Set<FoodKey>(recipes.map((r) => r._imgKey).filter(Boolean) as FoodKey[]);
+
+      const stamped: RecipeUI[] = newOnes.map((r) => {
+        const id = `${r.id}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        const key = pickRecipeImageKey(r, usedKeys);
+        usedKeys.add(key);
+        return { ...r, id, _imgKey: key, isFavorite: false };
+      });
 
       setRecipes((prev) => [...stamped, ...prev]);
     } finally {
@@ -108,9 +332,7 @@ export default function RecipeScreen() {
   }
 
   function toggleFavorite(id: string) {
-    setRecipes((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, isFavorite: !r.isFavorite } : r))
-    );
+    setRecipes((prev) => prev.map((r) => (r.id === id ? { ...r, isFavorite: !r.isFavorite } : r)));
   }
 
   function openDetail(recipe: RecipeUI) {
@@ -122,6 +344,11 @@ export default function RecipeScreen() {
     setSelected(null);
   }
 
+  const useSoonSlots = useMemo(() => {
+    // always show 3 slots (some may be empty)
+    return [useSoon[0] ?? null, useSoon[1] ?? null, useSoon[2] ?? null];
+  }, [useSoon]);
+
   return (
     <View style={styles.root}>
       {/* TOP YELLOW PANEL */}
@@ -129,32 +356,56 @@ export default function RecipeScreen() {
         <View style={styles.useItCard}>
           <Text style={styles.useItTitle}>Use it or lose it!</Text>
 
-          <View style={styles.useItPlaceholderRow}>
-            <View style={styles.circle} />
-            <View style={styles.circle} />
-            <View style={styles.circle} />
+          {/* ✅ NEW: 3 aligned groups (icon centered over label) */}
+          <View style={styles.useItGroupsRow}>
+            {useSoonSlots.map((item, idx) => {
+              if (!item) {
+                return (
+                  <View key={`slot-${idx}`} style={styles.useItGroup}>
+                    <View style={styles.circle}>
+                      {/* empty slot */}
+                    </View>
+                    <Text style={styles.useItLabelPlaceholder}> </Text>
+                  </View>
+                );
+              }
+
+              const label = normalizeFoodLabel(item.food_type);
+              const key = foodTypeToKey(item.food_type);
+              const src = key ? FOOD_IMAGES[key] : FOOD_IMAGES[GENERIC_FOOD_FALLBACK_KEY];
+
+              return (
+                <View key={`slot-${idx}`} style={styles.useItGroup}>
+                  <View style={styles.circle}>
+                    <Image source={src} style={styles.useItIcon} resizeMode="contain" />
+                  </View>
+                  <Text numberOfLines={2} style={styles.useItLabel}>
+                    {label}
+                  </Text>
+                </View>
+              );
+            })}
           </View>
 
-          <Text style={styles.useItSub}>
-            {useSoon.length === 0 ? "No ingredients yet." : useSoon.map((x) => x.food_type).join("   ")}
-          </Text>
+          {/* Keep your “No ingredients yet.” copy */}
+          {useSoon.length === 0 ? <Text style={styles.useItSub}>No ingredients yet.</Text> : null}
         </View>
       </View>
 
       {/* BOTTOM GREEN GRADIENT */}
       <LinearGradient
-  colors={["#3D8D15", "#74AF36"]}
-  start={{ x: 0, y: 0.2 }}
-  end={{ x: 0.57, y: 1 }}
-  style={styles.bottomGreen}
->
-    <View style={styles.recipesHeaderRow}>
-      <Text style={styles.recipesHeaderText}>Recipes</Text>
+        colors={["#3D8D15", "#74AF36"]}
+        start={{ x: 0, y: 0.2 }}
+        end={{ x: 0.57, y: 1 }}
+        style={styles.bottomGreen}
+      >
+        <View style={styles.recipesHeaderRow}>
+          <Text style={styles.recipesHeaderText}>Recipes</Text>
 
-      <Pressable onPress={() => { /* open filter modal later */ }}>
-        <FilterIcon width={22} height={22} />
-      </Pressable>
-    </View>
+          <Pressable onPress={() => { /* open filter modal later */ }}>
+            <FilterIcon width={22} height={22} />
+          </Pressable>
+        </View>
 
         {loading && recipes.length === 0 ? (
           <View style={styles.loadingWrap}>
@@ -174,7 +425,6 @@ export default function RecipeScreen() {
                 paddingRight: CONTENT_RIGHT_INSET,
               },
             ]}
-           
             renderItem={({ item }) => (
               <RecipeTile
                 recipe={item}
@@ -185,9 +435,7 @@ export default function RecipeScreen() {
             ListFooterComponent={
               <View style={styles.footer}>
                 <Pressable style={styles.generateBtn} onPress={onGenerateMore} disabled={loading}>
-                  <Text style={styles.generateBtnText}>
-                    {loading ? "Generating…" : "Generate"}
-                  </Text>
+                  <Text style={styles.generateBtnText}>{loading ? "Generating…" : "Generate"}</Text>
                 </Pressable>
 
                 <Text style={styles.favTitle}>Starred Recipes</Text>
@@ -199,8 +447,6 @@ export default function RecipeScreen() {
                     {chunk2(favorites).map((row, idx) => (
                       <View key={idx} style={styles.favRow}>
                         {row.map((r) => (
-                          // ✅ IMPORTANT CHANGE:
-                          // Remove the outer favCell (which was ALSO width: 48%) so tiles keep their normal size.
                           <RecipeTile
                             key={r.id}
                             recipe={r}
@@ -208,8 +454,6 @@ export default function RecipeScreen() {
                             onToggleStar={() => toggleFavorite(r.id)}
                           />
                         ))}
-
-                        {/* Keep the grid aligned if there's only 1 tile in the row */}
                         {row.length === 1 ? <View style={{ width: "48%" }} /> : null}
                       </View>
                     ))}
@@ -226,11 +470,12 @@ export default function RecipeScreen() {
         {selected ? (
           <View style={styles.detailRoot}>
             <View style={styles.detailHeader}>
-              {selected.image_url ? (
-                <Image source={{ uri: selected.image_url }} style={styles.detailImage} resizeMode="cover" />
-              ) : (
-                <View style={styles.detailImageFallback} />
-              )}
+              {/* ✅ FIX: use the same local stock image as the tile (no random remote photos) */}
+              <Image
+                source={FOOD_IMAGES[selected._imgKey ?? GENERIC_FOOD_FALLBACK_KEY]}
+                style={styles.detailImage}
+                resizeMode="cover"
+              />
 
               <Pressable style={styles.backBtn} onPress={closeDetail}>
                 <Text style={styles.backBtnText}>‹</Text>
@@ -239,7 +484,7 @@ export default function RecipeScreen() {
 
             <View style={styles.detailPanel}>
               <Text style={styles.detailTitle}>{selected.title}</Text>
-          
+
               <View style={styles.toggleWrap}>
                 <Pressable
                   onPress={() => setDetailTab("ingredients")}
@@ -306,16 +551,13 @@ export default function RecipeScreen() {
                   </>
                 )}
               </ScrollView>
+
               <View style={styles.metaRow}>
                 {typeof selected.time_minutes === "number" && (
                   <Text style={styles.meta}>⏱ {selected.time_minutes}m</Text>
                 )}
-                {selected.difficulty && (
-                  <Text style={styles.meta}>• {selected.difficulty}</Text>
-                )}
+                {selected.difficulty && <Text style={styles.meta}>• {selected.difficulty}</Text>}
               </View>
-
-              
             </View>
           </View>
         ) : null}
@@ -333,14 +575,17 @@ function RecipeTile({
   onPress: () => void;
   onToggleStar: () => void;
 }) {
+  const key = recipe._imgKey ?? GENERIC_FOOD_FALLBACK_KEY;
+  const src = FOOD_IMAGES[key];
+
   return (
     <Pressable style={styles.tile} onPress={onPress}>
       <View style={styles.tileImageWrap}>
-        {recipe.image_url ? (
-          <Image source={{ uri: recipe.image_url }} style={styles.tileImage} resizeMode="cover" />
-        ) : (
-          <View style={styles.tileImageFallback} />
-        )}
+        {/* DEBUG label (won't affect layout) */}
+        <Text style={styles.imgSlotLabel}>IMG SLOT</Text>
+
+        {/* ✅ FIX: local stock image only (no random photos / no remote 404s) */}
+        <Image source={src} style={styles.tileImage} resizeMode="cover" />
       </View>
 
       <View style={styles.tileFooter}>
@@ -355,9 +600,7 @@ function RecipeTile({
           }}
           hitSlop={10}
         >
-          <Text style={[styles.star, recipe.isFavorite ? styles.starOn : styles.starOff]}>
-            ★
-          </Text>
+          <Text style={[styles.star, recipe.isFavorite ? styles.starOn : styles.starOff]}>★</Text>
         </Pressable>
       </View>
     </Pressable>
@@ -398,16 +641,51 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 3,
     marginBottom: 7,
-    
   },
 
-  useItPlaceholderRow: {
+  // ✅ NEW: 3 groups aligned (icon centered above label)
+  useItGroupsRow: {
     flexDirection: "row",
-    gap: 18,
-    marginBottom: 10,
+    width: "100%",
     marginTop: 4,
+    marginBottom: 10,
+    gap: 12,
   },
-  circle: { width: 52, height: 52, borderRadius: 26, backgroundColor: "#E7E7E7" },
+  useItGroup: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "flex-start",
+  },
+
+  circle: {
+    width: 70,
+    height: 70,
+    borderRadius: 26,
+    backgroundColor: "#E7E7E7",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  useItIcon: {
+    width: 70,
+    height: 70,
+  },
+
+  useItLabel: {
+    marginTop: 20,
+    fontSize: 12,
+    fontFamily: "Helvetica-Light",
+    opacity: 0.9,
+    color: COLORS.darkGreen,
+    textAlign: "center",
+    lineHeight: 14,
+    minHeight: 28, // keep row height stable even if 2 lines
+  },
+
+  useItLabelPlaceholder: {
+    marginTop: 8,
+    minHeight: 28,
+  },
 
   useItSub: {
     marginTop: 6,
@@ -416,13 +694,15 @@ const styles = StyleSheet.create({
     opacity: 0.85,
     color: COLORS.darkGreen,
   },
+
   bottomGreen: { flex: 1, paddingLeft: 30, paddingRight: 18, paddingTop: 14 },
+
   recipesHeaderRow: {
     paddingVertical: 13,
     flexDirection: "row",
-    paddingHorizontal: 0, // ✅ was 13
+    paddingHorizontal: 0,
     alignItems: "center",
-    paddingRight:CONTENT_RIGHT_INSET,
+    paddingRight: CONTENT_RIGHT_INSET,
     justifyContent: "space-between",
     marginBottom: 12,
   },
@@ -438,9 +718,13 @@ const styles = StyleSheet.create({
     textShadowRadius: 3,
   },
 
-  
   loadingWrap: { paddingTop: 30, alignItems: "center" },
-  loadingText: { marginTop: 10, fontFamily: "Helvetica-Light", color: COLORS.offWhite, opacity: 0.85 },
+  loadingText: {
+    marginTop: 10,
+    fontFamily: "Helvetica-Light",
+    color: COLORS.offWhite,
+    opacity: 0.85,
+  },
 
   gridContent: { paddingBottom: 24 },
   gridRow: { justifyContent: "space-between", marginBottom: 14 },
@@ -451,9 +735,37 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     overflow: "hidden",
   },
-  tileImageWrap: { width: "100%", height: 150, backgroundColor: "#DDD" },
-  tileImage: { width: "100%", height: "100%" },
-  tileImageFallback: { flex: 1, backgroundColor: "#D9D9D9" },
+
+  tileImageWrap: {
+    width: "100%",
+    height: 150,
+    backgroundColor: "#DDD",
+    position: "relative",
+    overflow: "hidden",
+  },
+
+  tileImage: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: undefined,
+    height: undefined,
+  },
+
+  imgSlotLabel: {
+    position: "absolute",
+    top: 6,
+    left: 6,
+    zIndex: 5,
+    color: "red",
+    fontWeight: "800",
+    backgroundColor: "rgba(255,255,255,0.6)",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
 
   tileFooter: {
     flexDirection: "row",
@@ -471,7 +783,6 @@ const styles = StyleSheet.create({
     fontFamily: "Offbit-DotBold",
     fontWeight: "normal",
     letterSpacing: 0.5,
-    
   },
 
   star: { fontSize: 18, fontFamily: "Helvetica-Light" },
@@ -487,8 +798,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 8,
     marginBottom: 18,
-    width: 200,          // ✅ new
-    alignSelf: "center", // ✅ new
+    width: 200,
+    alignSelf: "center",
   },
 
   generateBtnText: {
@@ -506,25 +817,26 @@ const styles = StyleSheet.create({
     fontWeight: "normal",
     letterSpacing: 1,
     marginBottom: 10,
-    marginTop:10,
+    marginTop: 10,
     textShadowColor: "rgba(0,0,0,0.2)",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 3,
-    
   },
 
-  favEmpty: { color: COLORS.offWhite, fontFamily: "Helvetica-Light", opacity: 0.8, marginBottom: 10 },
+  favEmpty: {
+    color: COLORS.offWhite,
+    fontFamily: "Helvetica-Light",
+    opacity: 0.8,
+    marginBottom: 10,
+  },
 
   favGrid: { gap: 14 },
-
-  // ✅ Keep the row as a 2-column layout (same as recipe grid)
   favRow: { flexDirection: "row", justifyContent: "space-between" },
-  favCell: { width: "48%" }, // (unused now, but leaving it doesn’t hurt)
+  favCell: { width: "48%" },
 
   detailRoot: { flex: 1, backgroundColor: COLORS.darkGreen },
   detailHeader: { width: "100%", height: 300, backgroundColor: "#222" },
-  detailImage: { width: "100%", height: "100%" },
-  detailImageFallback: { flex: 1, backgroundColor: "#444" },
+  detailImage: { width: "100%", height: 260 },
 
   backBtn: {
     position: "absolute",
@@ -554,9 +866,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 30,
     paddingHorizontal: 18,
     paddingVertical: 40,
-    
-   
-    
   },
 
   detailTitle: {
@@ -610,12 +919,12 @@ const styles = StyleSheet.create({
 
   metaRow: {
     flexDirection: "row",
-    justifyContent: "center",   // ✅ center the whole row
+    justifyContent: "center",
     alignItems: "center",
     gap: 4,
-    marginBottom: 14,           // space before toggle
+    marginBottom: 14,
   },
-  
+
   meta: {
     fontSize: 16,
     fontFamily: "Helvetica-Light",
