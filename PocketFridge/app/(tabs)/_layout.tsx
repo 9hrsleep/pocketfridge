@@ -1,5 +1,6 @@
 // app/(tabs)/_layout.tsx
 import { Tabs } from 'expo-router';
+import { Text } from 'react-native';  // ← Add this import
 import React from 'react';
 import { Ionicons } from '@expo/vector-icons'; // <--- Standard Icons, no custom component needed
 
@@ -36,6 +37,13 @@ export default function TabLayout() {
           title: 'Cook',
           tabBarIcon: ({ color }) => <Ionicons size={28} name="restaurant" color={color} />,
         }}
+      />
+      <Tabs.Screen 
+        name="test" 
+        options={{ 
+          title: "Tests",
+          tabBarIcon: ({ color }) => <Text>🧪</Text>
+        }} 
       />
     </Tabs>
   );
