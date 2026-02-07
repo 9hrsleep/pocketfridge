@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
 
   welcomeTo: {
     fontFamily: "Offbit-Regular",
-    fontSize: 20,
+    fontSize: 48,
     letterSpacing: 0.5,
     color: "#FCFEEF",
     marginBottom: 6,
@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
 
   title: {
     fontFamily: "Offbit-DotBold",
-    fontSize: 36,
+    fontSize: 48,
     letterSpacing: -0.2,
     color: "#FCFEEF",
 
@@ -98,8 +98,8 @@ const styles = StyleSheet.create({
   },
 
   button: {
-    height: 56,
-    minWidth: 120,
+    height: 70,
+    minWidth: 175,
     paddingHorizontal: 22,
     borderRadius: 999,
     alignItems: "center",
