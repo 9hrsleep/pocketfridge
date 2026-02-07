@@ -53,8 +53,8 @@ export function FridgeProvider({ children }: { children: React.ReactNode }) {
       
       // Fields YOU add:
       id: generateItemId(),
-      has_icon: checkHasIcon(item.food_type),
-      icon_name: getIconName(item.food_type)
+      has_icon: !!(item.icon_name || checkHasIcon(item.food_type)),
+      icon_name: item.icon_name || getIconName(item.food_type)
     }));
     
     

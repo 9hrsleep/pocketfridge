@@ -4,18 +4,49 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useFridge } from '../contexts/FridgeContext';
+import { useState, useEffect } from 'react';
 
 export default function ConfirmScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const items = params.items ? JSON.parse(params.items as string) : [];
-  const receiptUri = params.receiptUri as string;
+  const receiptUri = params.receiptUri as string; // Keep this
 
   const { addItemsToFridge } = useFridge();
+
+  // 1. STATE: Initialize empty, then fill it from params
+  const [items, setItems] = useState<any[]>([]);
+
+  // 2.Load data when screen opens
+  useEffect(() => {
+    if (params.items) {
+      try {
+        const parsedItems = JSON.parse(params.items as string);
+        // Ensure every item has a quantity, default to 1 if missing
+        const cleanItems = parsedItems.map((item: any) => ({
+          ...item,
+          quantity: item.quantity || 1
+        }));
+        setItems(cleanItems);
+      } catch (e) {
+        console.error("Failed to parse items", e);
+      }
+    }
+  }, [params.items]);
 
   const handleConfirm = async () => {
     addItemsToFridge(items, receiptUri);
     router.replace('/(tabs)'); 
+  };
+
+  const updateQuantity = (index: number, change: number) => {
+    const newItems = [...items];
+    const currentQty = newItems[index].quantity;
+    
+    // Don't go below 1 (or 0 if you want to allow deleting)
+    if (currentQty + change >= 1) {
+      newItems[index].quantity = currentQty + change;
+      setItems(newItems);
+    }
   };
 
   return (
@@ -40,13 +71,13 @@ export default function ConfirmScreen() {
           {items.map((item: any, index: number) => (
             <View key={index} style={styles.itemRow}>
               <View style={styles.qtyControl}>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => updateQuantity(index, -1)}>
                   <Ionicons name="remove-circle-outline" size={24} color="#CEE67A" />
                 </TouchableOpacity>
 
                 <Text style={styles.qtyText}>{item.quantity}</Text>
 
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => updateQuantity(index, 1)}>
                   <Ionicons name="add-circle-outline" size={24} color="#285B23" />
                 </TouchableOpacity>
               </View>

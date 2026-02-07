@@ -35,7 +35,7 @@ export default function CameraScreen() {
 
   const processReceipt = async (base64: string) => {
     setLoading(true);
-    console.log("📸 Sending image to AI Service...");
+    console.log("Sending image to GPT4o mini AI Service...");
 
     // 3. Call your AI Brain
     const data = await parseReceipt(base64);
@@ -67,7 +67,7 @@ export default function CameraScreen() {
     setLoading(false);
   };
 
-  // --- KAI'S DESIGN: PROCESSING SCREEN ---
+  // --- PROCESSING SCREEN ---
   if (loading && imageUri) {
     return (
       <LinearGradient 
@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f5f5f5' },
   instructions: { fontSize: 16, marginBottom: 50, color: '#666' },
   
-  // Kai's Design Styles
+  // Design Styles
   gradientContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   processTitle: { 
     fontFamily: 'Offbit-DotBold',
