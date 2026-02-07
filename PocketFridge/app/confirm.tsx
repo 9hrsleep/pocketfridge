@@ -19,7 +19,12 @@ export default function ConfirmScreen() {
   };
 
   return (
-    <LinearGradient colors={['#B2D459', '#285B23']} style={styles.gradientRoot}>
+    <LinearGradient
+      colors={['#285B23', '#B2D459']}
+      start={{ x: 0.9, y: 1 }}     // ⭐ 65° gradient
+      end={{ x: 0, y: 1 }}     // ⭐
+      style={styles.gradientRoot}
+    >
       <Text style={styles.headerTitle}>Confirm Items</Text>
 
       <View style={styles.ticketCard}>

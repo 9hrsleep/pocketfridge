@@ -102,7 +102,8 @@ const styles = StyleSheet.create({
   // Kai's Design Styles
   gradientContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   processTitle: { 
-    fontSize: 24, 
+    fontFamily: 'Offbit-DotBold',
+    fontSize: 40, 
     fontWeight: 'bold', 
     color: '#FCFEEF', 
     marginBottom: 30,
