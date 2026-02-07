@@ -312,11 +312,29 @@ const styles = StyleSheet.create({
   topYellow: { backgroundColor: COLORS.yellow, paddingTop: 80, paddingHorizontal: 30, paddingBottom: 40 },
   useItCard: { backgroundColor: COLORS.offWhite, borderRadius: 22, paddingVertical: 20, paddingHorizontal: 16, alignItems: "center" },
   useItTitle: { fontSize: 40, fontFamily: "Offbit-DotBold", color: COLORS.darkGreen, marginBottom: 7, textShadowColor: "rgba(0,0,0,0.2)", textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 3 },
-  useItGroupsRow: { flexDirection: "row", width: "100%", marginTop: 4, marginBottom: 10, gap: 12 },
+  useItGroupsRow: {
+    flexDirection: "row",
+    width: "100%",
+    marginTop: 15, // INCREASED (was 4) - pushes icons down
+    marginBottom: 5, // DECREASED (was 10) - balances space below
+    gap: 12,
+  },
   useItGroup: { flex: 1, alignItems: "center", justifyContent: "flex-start" },
-  circle: { width: 70, height: 70, borderRadius: 26, backgroundColor: "#E7E7E7", alignItems: "center", justifyContent: "center" },
-  useItIcon: { width: 70, height: 70 },
-  useItLabel: { marginTop: 20, fontSize: 12, fontFamily: "Helvetica-Light", opacity: 0.9, color: COLORS.darkGreen, textAlign: "center", lineHeight: 14, minHeight: 28 },
+  circle: { width: 70, height: 70, backgroundColor: "transparent", alignItems: "center", justifyContent: "center" },
+  useItIcon: { width: 90, // CHANGED from 70
+    height: 90, // CHANGED from 70
+    resizeMode: 'contain'
+  },
+  useItLabel: {
+    marginTop: 12, // REDUCED (was 20) - brings text closer to icons
+    fontSize: 15, // INCREASED (was 12)
+    fontFamily: "Helvetica-Light",
+    opacity: 1.0, // Removed transparency for clearer text
+    color: COLORS.darkGreen,
+    textAlign: "center",
+    lineHeight: 18, // INCREASED (was 14) to match new font size
+    minHeight: 36, // Adjusted height for two lines of larger text
+  },
   useItSub: { marginTop: 6, fontSize: 13, fontFamily: "Helvetica-Light", opacity: 0.85, color: COLORS.darkGreen },
   bottomGreen: { flex: 1, paddingLeft: 30, paddingRight: 18, paddingTop: 14 },
   recipesHeaderRow: { paddingVertical: 13, flexDirection: "row", alignItems: "center", paddingRight: CONTENT_RIGHT_INSET, justifyContent: "space-between", marginBottom: 12 },
@@ -342,7 +360,7 @@ const styles = StyleSheet.create({
   favRow: { flexDirection: "row", justifyContent: "space-between" },
   detailRoot: { flex: 1, backgroundColor: COLORS.darkGreen },
   detailHeader: { width: "100%", height: 300, backgroundColor: "#222" },
-  detailImage: { width: "100%", height: 260 },
+  detailImage: { width: "100%", height: "100%"},
   backBtn: { position: "absolute", top: 54, left: 16, width: 44, height: 44, borderRadius: 22, backgroundColor: "rgba(0,0,0,0.35)", justifyContent: "center", alignItems: "center" },
   backBtnText: { color: "white", fontSize: 30, fontFamily: "Offbit-DotBold", marginTop: -2 },
   detailPanel: { flex: 1, marginTop: -6, backgroundColor: COLORS.offWhite, borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingHorizontal: 18, paddingVertical: 40 },

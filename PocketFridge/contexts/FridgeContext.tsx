@@ -55,7 +55,7 @@ const INITIAL_FRIDGE_DATA: FridgeItem[] = [
     date_added: '2026-02-02',
     date_expiring: getDateOnly(TODAY.toISOString()), // Expires today!
     has_icon: true,
-    icon_name: 'fish'
+    icon_name: 'salmon'
   },
   {
     id: 'item_broccoli',
