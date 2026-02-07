@@ -289,9 +289,10 @@ const styles = StyleSheet.create({
     overflow: 'visible', // iOS helps
   },
 
-  filterRowContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 12, // Android often needs this too
+  filterRowContent: {    
+    paddingLeft: 30, // <--- ADD THIS (Increased from 20 to scoot right)
+    paddingRight: 20, // Keep right padding for scrolling space
+    paddingBottom: 12, 
   },
 
   filterBtn: {
