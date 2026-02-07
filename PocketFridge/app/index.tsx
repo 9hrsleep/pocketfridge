@@ -4,7 +4,6 @@ import { SafeAreaView, View, Text, Pressable, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 
-// SVG as a React component (requires react-native-svg + react-native-svg-transformer)
 import ArrowForward from "../assets/icons/arrow_forward.svg";
 
 function gradientPointsFromAngle(deg: number) {
@@ -28,7 +27,6 @@ export default function Welcome() {
 
   return (
     <LinearGradient
-      // flipped gradient (swap colors)
       colors={["#F9FF83", "#1A7900"]}
       start={start}
       end={end}
@@ -36,8 +34,13 @@ export default function Welcome() {
     >
       <SafeAreaView style={styles.safe}>
         <View style={styles.content}>
-          <Text style={styles.title}>Welcome to Pocket Fridge</Text>
+          {/* Title */}
+          <View style={styles.titleWrapper}>
+            <Text style={styles.welcomeTo}>Welcome to</Text>
+            <Text style={styles.title}>Pocket Fridge</Text>
+          </View>
 
+          {/* Continue Button */}
           <Pressable
             onPress={() => router.replace("/(tabs)")}
             accessibilityRole="button"
@@ -58,42 +61,58 @@ export default function Welcome() {
 const styles = StyleSheet.create({
   gradient: { flex: 1 },
   safe: { flex: 1 },
+
   content: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 24,
-    gap: 22,
+    gap: 28,
+  },
+
+  titleWrapper: {
+    alignItems: "center",
+  },
+
+  welcomeTo: {
+    fontFamily: "Offbit-Regular",
+    fontSize: 48,
+    letterSpacing: 0.5,
+    color: "#FCFEEF",
+    marginBottom: 6,
+
+    textShadowColor: "rgba(0,0,0,0.35)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 6,
   },
 
   title: {
-    fontSize: 32,
-    lineHeight: 38,
-    textAlign: "center",
-    fontWeight: "700",
-    letterSpacing: -0.3,
+    fontFamily: "Offbit-DotBold",
+    fontSize: 48,
+    letterSpacing: -0.2,
     color: "#FCFEEF",
-    textShadowColor: "rgba(0, 0, 0, 0.35)",
+
+    textShadowColor: "rgba(0,0,0,0.35)",
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 6,
   },
 
   button: {
-    height: 56,
-    minWidth: 120,
+    height: 70,
+    minWidth: 175,
     paddingHorizontal: 22,
     borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#93C247",
 
-    // drop shadow
     shadowColor: "#000",
     shadowOpacity: 0.25,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 8 },
     elevation: 8,
   },
+
   buttonPressed: {
     transform: [{ scale: 0.96 }],
     shadowOpacity: 0.15,
