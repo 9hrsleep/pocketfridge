@@ -11,6 +11,7 @@ import FishIcon from '../../assets/icons/seafood.svg';
 import FruitIcon from '../../assets/icons/fruit.svg';
 import DairyIcon from '../../assets/icons/dairy.svg';
 import MenuIcon from '../../assets/icons/hamburgermenu.svg';
+import EditIcon from '../../assets/icons/edit-selected.svg'; // ✅ ADD THIS LINE
 
 // ------------ CONSTANT DEFS --------------- //
 const CARD_TOP = 225;
@@ -75,9 +76,10 @@ const isExpiringSoon = (dateString: string | null) => {
 export default function FridgeScreen() {
   const { fridgeItems } = useFridge();
   // ✅ ADD THIS DEBUG LINE
-  console.log('🔍 Fridge Items:', fridgeItems.length, fridgeItems);
+  // console.log('🔍 Fridge Items:', fridgeItems.length, fridgeItems);
   
   const [activeFilter, setActiveFilter] = useState<string | null>(null); // <--- Changed default to null
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid'); // ✅ ADD THIS LINE
 
   // REFS for Scrolling
   const scrollRef = useRef<ScrollView>(null);
@@ -130,20 +132,82 @@ export default function FridgeScreen() {
       <View style={styles.headerArea}>
         <View style={styles.headerRow}>
           <Text style={styles.pixelTitle}>Your Fridge</Text>
-          <TouchableOpacity style={styles.menuBtn}>
+          <TouchableOpacity 
+            style={styles.menuBtn}
+            onPress={() => {
+              const newMode = viewMode === 'grid' ? 'list' : 'grid';
+              setViewMode(newMode);
+              console.log('🔄 Switching to:', newMode);
+            }}
+          >
             <MenuIcon width={22} height={22} />
           </TouchableOpacity>
         </View>
       </View>
 
       <View style={styles.sheetCard}>
-        <ScrollView 
-          ref={scrollRef} // <--- Attach Ref
-          style={styles.mainScroll} 
-          showsVerticalScrollIndicator={false}
-          onScrollBeginDrag={() => setActiveFilter(null)} // <--- Untoggle when user drags
-          scrollEventThrottle={16}
-        >
+        {viewMode === 'grid' ? (
+          <ScrollView 
+            ref={scrollRef}
+            style={styles.mainScroll} 
+            showsVerticalScrollIndicator={false}
+            onScrollBeginDrag={() => setActiveFilter(null)}
+            scrollEventThrottle={16}
+          >
+            {fridgeItems.length === 0 ? (
+              <Text style={styles.emptyText}>Fridge is empty! 🛒</Text>
+            ) : (
+              CATEGORY_ORDER.map((category) => {
+                const items = groupedItems[category];
+                if (!items || items.length === 0) return null;
+
+                return (
+                  <View 
+                    key={category} 
+                    style={styles.sectionContainer}
+                    onLayout={(event) => {
+                      const layout = event.nativeEvent.layout;
+                      sectionYCoords.current[category] = layout.y;
+                    }}
+                  >
+                    <Text style={styles.sectionTitle}>
+                      {category.charAt(0).toUpperCase() + category.slice(1)}
+                    </Text>
+
+                    <View style={styles.gridContainer}>
+                      {items.map((item) => (
+                        <View key={item.id} style={styles.gridItem}>
+                          {isExpiringSoon(item.date_expiring) && (
+                            <View style={styles.notificationBubble}>
+                              <Text style={styles.notifText}>!</Text>
+                            </View>
+                          )}
+
+                          <View style={styles.imageCard}>
+                            {item.icon_name ? (
+                              <Image source={getFoodImage(item.icon_name)} style={styles.foodImage} />
+                            ) : (
+                              <Text style={{ fontSize: 30 }}>📦</Text>
+                            )}
+                            <View style={styles.quantityBadge}>
+                              <Text style={styles.quantityText}>{item.quantity}</Text>
+                            </View>
+                          </View>
+
+                          <Text style={styles.foodLabel}>{item.food_type}</Text>
+                        </View>
+                      ))}
+                    </View>
+
+                    <View style={styles.separator} />
+                  </View>
+                );
+              })
+            )}
+            <View style={{ height: 100 }} />
+          </ScrollView>
+        ) : (
+          <ScrollView style={styles.mainScroll} showsVerticalScrollIndicator={false}>
           {fridgeItems.length === 0 ? (
             <Text style={styles.emptyText}>Fridge is empty! 🛒</Text>
           ) : (
@@ -152,44 +216,31 @@ export default function FridgeScreen() {
               if (!items || items.length === 0) return null;
 
               return (
-                <View 
-                  key={category} 
-                  style={styles.sectionContainer}
-                  // MEASURE Y POSITION
-                  onLayout={(event) => {
-                    const layout = event.nativeEvent.layout;
-                    sectionYCoords.current[category] = layout.y;
-                  }}
-                >
-                  <Text style={styles.sectionTitle}>
-                    {category.charAt(0).toUpperCase() + category.slice(1)}
-                  </Text>
-
-                  <View style={styles.gridContainer}>
-                    {items.map((item) => (
-                      <View key={item.id} style={styles.gridItem}>
-                        {isExpiringSoon(item.date_expiring) && (
-                          <View style={styles.notificationBubble}>
-                            <Text style={styles.notifText}>!</Text>
-                          </View>
-                        )}
-
-                        <View style={styles.imageCard}>
-                          {item.icon_name ? (
-                            <Image source={getFoodImage(item.icon_name)} style={styles.foodImage} />
-                          ) : (
-                            <Text style={{ fontSize: 30 }}>📦</Text>
-                          )}
-                          {/* ✅ Quantity badge MUST be INSIDE imageCard */}
-                          <View style={styles.quantityBadge}>
-                            <Text style={styles.quantityText}>{item.quantity}</Text>
-                          </View>
-                        </View>
-
-                        <Text style={styles.foodLabel}>{item.food_type}</Text>
-                      </View>
-                    ))}
+                <View key={category} style={styles.listSection}>
+                  <View style={styles.listHeaderRow}>
+                    <Text style={styles.sectionTitle}>
+                      {category.charAt(0).toUpperCase() + category.slice(1)}
+                    </Text>
+                    <TouchableOpacity>
+                      <EditIcon width={20} height={20} />
+                    </TouchableOpacity>
                   </View>
+
+                  {items.map((item) => (
+                    <View key={item.id} style={styles.listItemRow}>
+                      <TouchableOpacity style={styles.listMinusBtn}>
+                        <Text style={styles.listBtnText}>−</Text>
+                      </TouchableOpacity>
+
+                      <Text style={styles.listQuantity}>{item.quantity}</Text>
+
+                      <TouchableOpacity style={styles.listPlusBtn}>
+                        <Text style={styles.listBtnText}>+</Text>
+                      </TouchableOpacity>
+
+                      <Text style={styles.listItemName}>{item.food_type}</Text>
+                    </View>
+                  ))}
 
                   <View style={styles.separator} />
                 </View>
@@ -198,6 +249,7 @@ export default function FridgeScreen() {
           )}
           <View style={{ height: 100 }} />
         </ScrollView>
+        )}
       </View>
 
       <View style={styles.filtersDock}>
@@ -416,5 +468,74 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     fontFamily: 'Helvetica-Light',
+  },
+
+  // ✅ LIST VIEW STYLES
+  listSection: {
+    marginBottom: 20,
+  },
+
+  listHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+
+  editIcon: {
+    fontSize: 20,
+  },
+
+  listItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+  },
+
+  listMinusBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#ef4444',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#dc2626',
+  },
+
+  listPlusBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#22c55e',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#16a34a',
+  },
+
+  listBtnText: {
+    fontSize: 20,
+    color: 'white',
+    fontWeight: 'bold',
+  },
+
+  listQuantity: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginHorizontal: 16,
+    minWidth: 30,
+    textAlign: 'center',
+    fontFamily: 'Helvetica-Light',
+    color: '#285B23',
+  },
+
+  listItemName: {
+    fontSize: 16,
+    flex: 1,
+    marginLeft: 16,
+    fontFamily: 'Helvetica-Light',
+    color: '#285B23',
   },
 });
