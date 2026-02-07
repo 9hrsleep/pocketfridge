@@ -1,42 +1,40 @@
+// app/(tabs)/_layout.tsx
 import { Tabs } from 'expo-router';
 import React from 'react';
-
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-// note, This file controls ALL TABS - barbara
+import { Ionicons } from '@expo/vector-icons'; // <--- Standard Icons, no custom component needed
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
-        tabBarButton: HapticTab,
+        tabBarActiveTintColor: '#0a7ea4', // Blue color for active tab
       }}>
+      
+      {/* Tab 1: Home/Fridge */}
       <Tabs.Screen
-        name="Fridge"
+        name="index" // Matches index.tsx
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: 'Fridge',
+          tabBarIcon: ({ color }) => <Ionicons size={28} name="home" color={color} />,
         }}
       />
+
+      {/* Tab 2: Camera */}
       <Tabs.Screen
-        name="Camera"
+        name="camera" // Matches camera.tsx
         options={{
-          title: 'Camera',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'Scan',
+          tabBarIcon: ({ color }) => <Ionicons size={28} name="camera" color={color} />,
         }}
       />
+
+      {/* Tab 3: Recipes */}
       <Tabs.Screen
-        name="Recipes"
+        name="recipes"
         options={{
-          title: 'Recipes',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="book.fill" color={color} />,
+          title: 'Cook',
+          tabBarIcon: ({ color }) => <Ionicons size={28} name="restaurant" color={color} />,
         }}
       />
     </Tabs>
