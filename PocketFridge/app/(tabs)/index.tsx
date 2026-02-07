@@ -27,6 +27,7 @@ const FILTERS = [
 ];
 
 const FOOD_IMAGES: Record<string, any> = {
+  banana: require('../../assets/images/food/banana.png'),
   beefsteak: require('../../assets/images/food/beefsteak.png'),
   broccoli: require('../../assets/images/food/broccoli.png'),
   butter: require('../../assets/images/food/butter.png'),
@@ -73,6 +74,9 @@ const isExpiringSoon = (dateString: string | null) => {
 
 export default function FridgeScreen() {
   const { fridgeItems } = useFridge();
+  // ✅ ADD THIS DEBUG LINE
+  console.log('🔍 Fridge Items:', fridgeItems.length, fridgeItems);
+  
   const [activeFilter, setActiveFilter] = useState<string | null>(null); // <--- Changed default to null
 
   // REFS for Scrolling
@@ -176,6 +180,10 @@ export default function FridgeScreen() {
                           ) : (
                             <Text style={{ fontSize: 30 }}>📦</Text>
                           )}
+                          {/* ✅ Quantity badge MUST be INSIDE imageCard */}
+                          <View style={styles.quantityBadge}>
+                            <Text style={styles.quantityText}>{item.quantity}</Text>
+                          </View>
                         </View>
 
                         <Text style={styles.foodLabel}>{item.food_type}</Text>
@@ -385,5 +393,27 @@ const styles = StyleSheet.create({
     borderColor: '#fff',
   },
 
+
   notifText: { color: 'white', fontWeight: 'bold', fontSize: 12 },
+
+    // ✅ ADD THESE TWO NEW STYLES HERE (before the closing bracket):
+  quantityBadge: {
+    position: 'absolute',
+    bottom: 6,
+    right: 6,
+    backgroundColor: '#285B23',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    minWidth: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  quantityText: {
+    color: '#FCFEEF',
+    fontSize: 14,
+    fontWeight: 'bold',
+    fontFamily: 'Helvetica-Light',
+  },
 });

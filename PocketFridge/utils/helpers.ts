@@ -19,17 +19,87 @@ export function getDateOnly(timestamp: string): string {
   return timestamp.split('T')[0]; // "2026-02-06T15:30:00Z" -> "2026-02-06"
 }
 
-//  ICON MAPPING
+// HARDCODED: List of foods we have icons for
 const ICON_MAP: Record<string, string> = {
-  'tomato': 'tomato', 'tomatoes': 'tomato', // map these names to icon image file paths (ex. "tomato.png")
-  'carrot': 'carrot', 'carrots': 'carrot', 
-  'lettuce': 'lettuce', 'broccoli': 'broccoli',
-  'apple': 'apple', 'apples': 'apple',
-  'banana': 'banana', 'bananas': 'banana',
-  'orange': 'orange', 'oranges': 'orange',
-  'milk': 'milk', 'cheese': 'cheese',
-  'chicken': 'chicken', 'beef': 'beef', 'eggs': 'eggs',
-  'bread': 'bread', 'rice': 'rice', 'pasta': 'pasta',
+  // Vegetables
+  'tomato': 'tomato',
+  'tomatoes': 'tomato',
+  'carrot': 'carrot',
+  'carrots': 'carrot',
+  'banana': 'banana',
+  'bananas': 'banana',
+  'broccoli': 'broccoli',
+  'cucumber': 'cucumber',
+  'cucumbers': 'cucumber',
+  'garlic': 'garlic',
+  'green bean': 'greenbean',
+  'green beans': 'greenbean',
+  'greenbean': 'greenbean',
+  'greenbeans': 'greenbean',
+  'bell pepper': 'greenbellpepper',
+  'green bell pepper': 'greenbellpepper',
+  'green pepper': 'greenbellpepper',
+  'red bell pepper': 'redbellpepper',
+  'red pepper': 'redbellpepper',
+  'jalapeno': 'jalapeno',
+  'jalapeño': 'jalapeno',
+  'jalapenos': 'jalapeno',
+  'lime': 'lime',
+  'limes': 'lime',
+  'potato': 'potato',
+  'potatoes': 'potato',
+  
+  // Fruits
+  // (Add if you have fruit icons)
+  
+  // Dairy
+  'milk': 'milk',
+  '2% milk': 'milk',
+  'whole milk': 'milk',
+  'skim milk': 'milk',
+  'heavy cream': 'heavycream',
+  'cream': 'heavycream',
+  'parmesan': 'parmesan',
+  'parmesan cheese': 'parmesan',
+  'butter': 'butter',
+  'yogurt': 'yogurt',
+  
+  // Proteins
+  'beef': 'beefsteak',
+  'beefsteak': 'beefsteak',
+  'steak': 'beefsteak',
+  'ribeye': 'beefsteak',
+  'ribeye steak': 'beefsteak',
+  'chicken': 'chickenbreast',
+  'chicken breast': 'chickenbreast',
+  'chicken broth': 'chickenbroth',
+  'broth': 'chickenbroth',
+  'egg': 'egg',
+  'eggs': 'egg',
+  'salmon': 'salmon',
+  'fish': 'salmon',
+  'shrimp': 'shrimp',
+  'shrimps': 'shrimp',
+  'prawns': 'shrimp',
+  'shallot': 'shallot',
+  'shallots': 'shallot',
+  'impossible burger': 'impossibleburger',
+  'veggie burger': 'impossibleburger',
+  
+  // Grains & Pasta
+  'bread': 'wheatbread',
+  'wheat bread': 'wheatbread',
+  'pasta': 'spaghetti',
+  'spaghetti': 'spaghetti',
+  'rigatoni': 'rigatoni',
+  
+  // Condiments & Sauces
+  'ketchup': 'ketchup',
+  'peanut butter': 'peanutbutter',
+  'pb': 'peanutbutter',
+  'tomato paste': 'tomatopaste',
+  
+  // Add more as needed...
 };
 
 export function checkHasIcon(foodType: string): boolean {
